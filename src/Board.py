@@ -3,7 +3,7 @@ from typing import Iterable
 from collections import deque
 
 from src.cards import Cards
-from src.player import Player
+from src.player import Player, ACTIONS, ACTION_NAME_TO_ACTION_ARG_ASKER, INVALID_ACTIONS
 from src.card_pile import CardPile
 
 
@@ -23,41 +23,38 @@ class Board:
     def play_turn(self) -> None:
         current_player = self.players[self.player_index]
 
-
+        self.executePlayerAction(current_player)
 
         self.player_index += 1
         self.player_index %= len(self.players)
 
 
-class PlayerActionOperator:
+    def executePlayerAction(self, player: Player):
+        # TRIPLE DISPATCH
+        # 1. Choosing player method based on user input
+        # - Doing a dictionary lookup based on user input
+        # 2. Choosing the input selecting method which asks the user for inputs about the action they want to execute
+        # - Doing a dictionary lookup based on action_name
+        # 3. Execute the method which asks for user input
+        # 4. Execute the player action with given input
 
-    # TRIPLE DISPATCH
-    # 1. Choosing player method based on user input
-    # - Doing a dictionary lookup based on user input
-    # 2. Choosing the input selecting method which asks the user for inputs about the action they want to execute
-    # - Doing a dictionary lookup based on action_name
-    # 3. Execute the method which asks for user input
-    # 4. Execute the player action with given input
-
-    def __init__(self, player: Player) -> None:
         action_name = ""
-        while not hasattr(player, action_name) or action_name in PlayerActionOperator.INVALID_ACTIONS:
+        while not hasattr(player, action_name) or action_name in INVALID_ACTIONS:
             if action_name == "exit":
                 raise InterruptedError("Quiting game!")
             action_name = input("What would you like to do? ").lower()
 
-        action =
+        # if action_name == "pickup":
+        #     player.pickup(self.play_pile)
+        # if action_name ==
 
-
-        arguments = PlayerActionInputAsker().ask() # Step 3.
-        action(arguments)  # Step 4.
+        action = ACTIONS[action_name](player)
+        player_action_input_asker = ACTION_NAME_TO_ACTION_ARG_ASKER[action_name]
+        arguments = player_action_input_asker()  # Step 3.
+        action(*arguments)  # Step 4.
         return None
-
-
-
 
 
 class BoardPlayOrder:
     UP = 0
     DOWN = 1
-
