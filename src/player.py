@@ -53,25 +53,3 @@ class Player:
         hand_before_rotation = self.hand
         self.hand = hand
         return hand_before_rotation
-
-
-INVALID_ACTIONS = {"draw_card", "receive_card", "rotate_hand"}
-
-
-ACTIONS = {"pickup": lambda player: player,
-           "pop_from_hand": lambda player: player.pop_from_hand,
-           "pop_from_hand_multiple": lambda player: player.pop_from_hand_multiple,
-           "swap_hand_card_with_poop": lambda player: player.swap_hand_card_with_poop,
-           "pop_from_face_up_poop": lambda player: player.pop_from_face_up_poop,
-           "pop_multiple_from_face_up_poop": lambda player: player.pop_multiple_from_face_up_poop,
-           "pop_from_face_down_poop": lambda player: player.pop_from_face_down_poop,
-           "pop_multiple_from_face_down_poop": lambda player: player.pop_multiple_from_face_down_poop}
-
-ACTION_NAME_TO_ACTION_ARG_ASKER = {"pickup": lambda: None,
-                                    "pop_from_hand": lambda: input("What card INDEX would you like to play? "),
-                                    "pop_from_hand_multiple": lambda: input("What card INDICES would you like to play? "),
-                                    "swap_hand_card_with_poop": lambda: (input("What poop face up INDEX would you like to swap? "), input("What card INDICES would you like to swap? ")),
-                                   "pop_from_face_up_poop": lambda: input("What card INDEX would you like to play? "),
-                                   "pop_multiple_from_face_up_poop": lambda: input("What card INDICES would you like to play? "),
-                                   "pop_from_face_down_poop": lambda: input("What card INDEX would you like to play? "),
-                                   "pop_multiple_from_face_down_poop": lambda: input("What card INDICES would you like to play? ")}

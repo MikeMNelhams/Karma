@@ -3,11 +3,14 @@ from typing import Iterable
 from collections import deque
 
 from src.cards import Cards
-from src.player import Player, ACTIONS, ACTION_NAME_TO_ACTION_ARG_ASKER, INVALID_ACTIONS
+from src.player import Player
 from src.card_pile import CardPile
+from src.valid_card_plays import BoardPlayOrder
 
 
 class Board:
+    INVALID_ACTIONS = {"draw_card", "receive_card", "rotate_hand"}
+
     def __init__(self, players: Iterable[Player], draw_pile: CardPile, who_starts: int):
         self.players = deque(players)
         self.draw_pile = draw_pile
@@ -28,7 +31,6 @@ class Board:
         self.player_index += 1
         self.player_index %= len(self.players)
 
-
     def executePlayerAction(self, player: Player):
         # TRIPLE DISPATCH
         # 1. Choosing player method based on user input
@@ -39,22 +41,18 @@ class Board:
         # 4. Execute the player action with given input
 
         action_name = ""
-        while not hasattr(player, action_name) or action_name in INVALID_ACTIONS:
+        while not hasattr(player, action_name) or action_name in Board.INVALID_ACTIONS:
             if action_name == "exit":
                 raise InterruptedError("Quiting game!")
             action_name = input("What would you like to do? ").lower()
 
-        # if action_name == "pickup":
-        #     player.pickup(self.play_pile)
-        # if action_name ==
+        if action_name == "pickup":
+            player.pickup(self.play_pile)
+            return None
+        if action_name == "pop_from_hand":
+            chosen_index = input("What card INDEX would you like to play?")
 
-        action = ACTIONS[action_name](player)
-        player_action_input_asker = ACTION_NAME_TO_ACTION_ARG_ASKER[action_name]
-        arguments = player_action_input_asker()  # Step 3.
-        action(*arguments)  # Step 4.
         return None
 
 
-class BoardPlayOrder:
-    UP = 0
-    DOWN = 1
+

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from enum import Enum
+
 from typing import Iterable, TypeVar
 
 
@@ -45,7 +47,7 @@ class CardColor:
     BLACK = 1
 
 
-class CardValue:
+class CardValue(Enum):
     TWO = 2
     THREE = 3
     FOUR = 4
