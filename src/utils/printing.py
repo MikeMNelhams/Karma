@@ -1,3 +1,6 @@
+import os
+
+
 class PrintColors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -18,6 +21,19 @@ def colour_blue(phrase: str) -> str:
     return f"{PrintColors.OKBLUE}{phrase}{PrintColors.ENDC}"
 
 
+def colour_green(phrase: str) -> str:
+    return f"{PrintColors.OKGREEN}{phrase}{PrintColors.ENDC}"
+
+
+def colour_cyan(phrase: str) -> str:
+    return f"{PrintColors.OKCYAN}{phrase}{PrintColors.ENDC}"
+
+
 def print_row(number_of_chars: int=50, char: str= '-') -> None:
     print(char * number_of_chars)
+    return None
+
+
+def clear_all_text() -> None:
+    os.system('cls' if os.name == 'nt' else "printf '\033c'")
     return None

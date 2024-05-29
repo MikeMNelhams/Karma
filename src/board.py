@@ -11,9 +11,7 @@ from src.cards import Cards, Card, CardValue
 from src.hand import Hand
 from src.player import Player
 from src.card_pile import CardPile, PlayCardPile
-
-
-type Controller = Callable[[Board], tuple[Any]]
+from src.controller import Controller
 
 
 class PlayerAction(ABC):
@@ -65,6 +63,12 @@ class Board:
         self.cards_are_flipped = False
         self.effect_multiplier = 1
         self.player_index = who_starts
+
+    def get_player(self, player_index: int) -> Player:
+        return self.players[player_index]
+
+    def increment_player_index(self, increment: int=1) -> None:
+        self.player_index += increment
 
     def play_card(self, card: Card) -> None:
         self.play_pile.add_card(card)
@@ -139,7 +143,7 @@ class Board:
         return None
 
     def __play_nine(self) -> None:
-        self.player_index += self.effect_multiplier
+        self.increment_player_index(self.effect_multiplier)
         return None
 
     def __play_ten(self) -> None:
@@ -151,7 +155,7 @@ class Board:
     def __play_jack(self) -> None:
         if len(self.play_pile) <= 1:
             return None
-        self.play_card(self.play_pile.cards[-2])
+        self.play_card(self.play_pile[-2])
         return None
 
     def __play_queen(self) -> None:
@@ -168,7 +172,7 @@ class Board:
         return None
 
     def __play_joker(self) -> None:
-        self.burn_pile.add_card(self.play_pile.cards[-1])
+        self.burn_pile.add_card(self.play_pile[-1])
         self.burn(is_joker=True)
 
         index = -1
@@ -180,11 +184,11 @@ class Board:
 
     def burn(self, is_joker: bool) -> None:
         if is_joker:
-            self.burn_pile.add_card(self.burn_pile.cards.pop())
+            self.burn_pile.add_card(self.burn_pile.pop())
             return None
-        self.burn_pile.add_cards(self.play_pile.cards)
+        self.burn_pile.add_cards(self.play_pile)
         self.play_pile.clear()
-        self.player_index -= 1
+        self.increment_player_index(-1)
         return None
 
     def is_legal_play(self, play_card: Card) -> bool:

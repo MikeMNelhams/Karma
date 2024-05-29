@@ -1,7 +1,5 @@
 from typing import Iterable
 
-import random
-
 from src.cards import Card, Cards
 
 

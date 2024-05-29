@@ -1,4 +1,4 @@
-from typing import Any, Callable, Iterable
+from typing import Iterable
 
 from src.cards import Card
 from src.card_pile import CardPile
@@ -22,7 +22,7 @@ class Player:
         return f"FUP{self.poop_face_up}, FDP{self.poop_face_down.repr_flipped()}"
 
     def pickup(self, pile: CardPile) -> None:
-        self.hand.add_cards(pile.cards)
+        self.hand.add_cards(pile)
         pile.clear()
         return None
 
@@ -32,8 +32,8 @@ class Player:
     def pop_from_hand_multiple(self, indices: Iterable[int]) -> None:
         return self.hand.pop_cards(indices)
 
-    def swap_hand_card_with_poop(self, poop_index: int, hand_index: int) -> None:
-        self.hand[hand_index], self.poop_face_up[poop_index] = self.poop_face_up[poop_index], self.poop_face_up[poop_index]
+    def swap_hand_card_with_poop(self, hand_index: int, poop_index: int) -> None:
+        self.hand[hand_index], self.poop_face_up[poop_index] = self.poop_face_up[poop_index], self.hand[hand_index]
         return None
 
     def pop_from_face_up_poop(self, index: int) -> None:
