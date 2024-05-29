@@ -14,6 +14,7 @@ class Player:
 
     def pickup(self, pile: CardPile) -> None:
         self.hand.add_cards(pile.cards)
+        pile.clear()
         return None
 
     def pop_from_hand(self, index: int) -> Card:

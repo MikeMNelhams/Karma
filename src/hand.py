@@ -27,3 +27,6 @@ class Hand(Cards):
     def shuffle(self) -> None:
         random.shuffle(self)
         return None
+
+    def is_valid_card_index(self, index: int) -> bool:
+        return not (0 <= index <= len(self))
