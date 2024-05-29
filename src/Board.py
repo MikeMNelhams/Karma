@@ -48,31 +48,26 @@ class Board:
         # 3. Execute the method which asks for user input
         # 4. Execute the player action with given input
 
-        not_played_legal_move = True
-        while not_played_legal_move:
-            action_name = ""
-            while not hasattr(player, action_name) or action_name in Board.INVALID_ACTIONS:
-                if action_name == "exit":
-                    raise InterruptedError("Quiting game!")
-                action_name = input("What would you like to do? ").lower()
-
-            if action_name == "pickup":
-                player.pickup(self.play_pile)
-                return None
-            if action_name == "pop_from_hand":
-                index = input("What card INDEX would you like to play?")
-
-                if not player.hand.is_valid_card_index(index):
-                    continue
-
-                if not is_legal_move(player.hand[index], self.play_order, self.cards_are_flipped, self.play_pile):
-                    print(f"That card cannot be played on top of {self.play_pile}")
-                    continue
-
-
-
-
-
+        # not_played_legal_move = True
+        # while not_played_legal_move:
+        #     action_name = ""
+        #     while not hasattr(player, action_name) or action_name in Board.INVALID_ACTIONS:
+        #         if action_name == "exit":
+        #             raise InterruptedError("Quiting game!")
+        #         action_name = input("What would you like to do? ").lower()
+        #
+        #     if action_name == "pickup":
+        #         player.pickup(self.play_pile)
+        #         return None
+        #     if action_name == "pop_from_hand":
+        #         index = input("What card INDEX would you like to play?")
+        #
+        #         if not player.hand.is_valid_card_index(index):
+        #             continue
+        #
+        #         if not self.is_legal_play(player.hand[index]):
+        #             print(f"That card cannot be played on top of {self.play_pile}")
+        #             continue
 
         return None
 
@@ -164,10 +159,13 @@ class Board:
         self.play_card(self.play_pile.cards[-2])
         return None
 
-
     def __play_queen(self) -> None:
+        # TODO
+        pass
 
     def __play_king(self) -> None:
+        # TODO
+        pass
 
     def __play_ace(self) -> None:
         for _ in range(self.effect_multiplier):
@@ -194,21 +192,20 @@ class Board:
         self.player_index -= 1
         return None
 
+    def is_legal_play(self, play_card: Card) -> bool:
+        if self.cards_are_flipped:
+            return True
 
-def is_legal_move(play_card: Card, board_play_order: BoardPlayOrder, is_blind: bool, play_pile: PlayCardPile) -> bool:
-    if is_blind:
-        return True
+        if not self.play_pile and play_card.value != CardValue.JOKER:
+            return True
 
-    if not play_pile and play_card.value != CardValue.JOKER:
-        return True
+        if play_card.value == CardValue.JOKER:
+            return self.play_pile.pop_card(-1).value == CardValue.ACE
 
-    if play_card.value == CardValue.JOKER:
-        return play_pile.pop_card(-1).value == CardValue.ACE
+        first_non_four = self.play_pile.first_non_four
+        if first_non_four is None:
+            return True
 
-    first_non_four = play_pile.first_non_four
-    if first_non_four is None:
-        return True
-
-    if board_play_order == BoardPlayOrder.UP:
-        return play_card.value >= first_non_four.value
-    return play_card.value <= first_non_four.value
+        if self.play_order == BoardPlayOrder.UP:
+            return play_card.value >= first_non_four.value
+        return play_card.value <= first_non_four.value
