@@ -1,31 +1,12 @@
 from cards import Card, Cards, CardValue
 
 
-class CardPile:
+class CardPile(Cards):
     def __init__(self, cards: Cards):
-        self.cards = [card for card in cards]
-
-    def __bool__(self) -> bool:
-        return len(self) != 0
-
-    def __len__(self) -> int:
-        return len(self.cards)
-
-    def add_card_to_top(self, card: Card) -> None:
-        self.cards.append(card)
-        return None
-
-    def add_cards_to_top(self, cards: Cards) -> None:
-        for card in cards:
-            self.add_card_to_top(card)
-        return None
+        super().__init__(cards)
 
     def pop_card(self, index: int) -> Card:
-        return self.cards.pop(index)
-
-    def clear(self) -> None:
-        self.cards = []
-        return None
+        return self.pop(index)
 
 
 class PlayCardPile(CardPile):
@@ -33,14 +14,14 @@ class PlayCardPile(CardPile):
         super().__init__(cards)
         self.first_non_four = None
 
-    def add_card_to_top(self, card: Card) -> None:
-        super().add_card_to_top(card)
+    def add_card(self, card: Card) -> None:
+        super().add_card(card)
         if card.value != CardValue.FOUR:
             self.first_non_four = card
         return None
 
-    def add_cards_to_top(self, cards: Cards) -> None:
-        super().add_cards_to_top(cards)
+    def add_cards(self, cards: Cards) -> None:
+        super().add_cards(cards)
         for card in reversed(cards):
             if card.value != CardValue.FOUR:
                 self.first_non_four = card

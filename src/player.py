@@ -3,7 +3,7 @@ from typing import Any, Callable, Iterable
 from src.cards import Card
 from src.card_pile import CardPile
 from src.hand import Hand
-from src.Poop import PoopFaceUp, PoopFaceDown
+from src.poop import PoopFaceUp, PoopFaceDown
 
 
 class Player:

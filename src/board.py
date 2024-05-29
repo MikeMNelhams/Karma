@@ -66,21 +66,8 @@ class Board:
         self.effect_multiplier = 1
         self.player_index = who_starts
 
-    def __repr__(self) -> str:
-        game_state_str = (f"Game State: ({self.play_order}, Flipped?: {self.cards_are_flipped}" 
-                          f"Multiplier: {self.effect_multiplier}, whose turn: {self.player_index})")
-        if self.cards_are_flipped:
-            return self.__repr_invisible() + game_state_str
-        return self.__repr_visible() + game_state_str
-
-    def __repr_invisible(self) -> str:
-        return "\n".join(player.repr_invisible_hand() for player in self.players) + "\n"
-
-    def __repr_visible(self) -> str:
-        return "\n".join(player.__repr__() for player in self.players) + "\n"
-
     def play_card(self, card: Card) -> None:
-        self.play_pile.add_card_to_top(card)
+        self.play_pile.add_card(card)
 
         match card.value:
             case CardValue.TWO:
@@ -181,7 +168,7 @@ class Board:
         return None
 
     def __play_joker(self) -> None:
-        self.burn_pile.add_card_to_top(self.play_pile.cards[-1])
+        self.burn_pile.add_card(self.play_pile.cards[-1])
         self.burn(is_joker=True)
 
         index = -1
@@ -193,9 +180,9 @@ class Board:
 
     def burn(self, is_joker: bool) -> None:
         if is_joker:
-            self.burn_pile.add_card_to_top(self.burn_pile.cards.pop())
+            self.burn_pile.add_card(self.burn_pile.cards.pop())
             return None
-        self.burn_pile.add_cards_to_top(self.play_pile.cards)
+        self.burn_pile.add_cards(self.play_pile.cards)
         self.play_pile.clear()
         self.player_index -= 1
         return None
