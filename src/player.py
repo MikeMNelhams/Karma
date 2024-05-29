@@ -12,6 +12,15 @@ class Player:
         self.poop_face_down = starting_face_down_poop
         self.poop_face_up = starting_face_up_poop
 
+    def __repr__(self) -> str:
+        return f"Player(H{self.hand}, {self.__repr_poop()})"
+
+    def repr_invisible_hand(self) -> str:
+        return f"Player({self.hand.repr_flipped()}, {self.__repr_poop()})"
+
+    def __repr_poop(self) -> str:
+        return f"FUP{self.poop_face_up}, FDP{self.poop_face_down.repr_flipped()}"
+
     def pickup(self, pile: CardPile) -> None:
         self.hand.add_cards(pile.cards)
         pile.clear()

@@ -1,5 +1,8 @@
-from typing import Iterable
+from __future__ import annotations
 
+from typing import Any, Callable, Iterable
+
+from abc import ABC, abstractmethod
 from enum import Enum
 
 from collections import deque
@@ -10,6 +13,39 @@ from src.player import Player
 from src.card_pile import CardPile, PlayCardPile
 
 
+type Controller = Callable[[Board], tuple[Any]]
+
+
+class PlayerAction(ABC):
+    @abstractmethod
+    def is_valid(self, board: Board, player_index: int) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def _get_arguments_from_user(self, board: Board, controller: Controller) -> tuple[Any]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def __call__(self, board: Board) -> None:
+        raise NotImplementedError
+
+    def name(self):
+        return self.__class__.__name__
+
+
+class PickUpPlayPile(PlayerAction):
+    def is_valid(self, board: Board, player_index: int) -> bool:
+        if board.player_index != player_index:
+            return False
+        return len(board.play_pile) > 0
+
+    def _get_arguments_from_user(self, board: Board, controller: Controller) -> tuple[Any]:
+        return tuple()
+
+    def __call__(self, board: Board) -> None:
+        player = board.player_index
+
+
 class BoardPlayOrder(Enum):
     UP = 0
     DOWN = 1
@@ -17,7 +53,6 @@ class BoardPlayOrder(Enum):
 
 class Board:
     INVALID_ACTIONS = {"draw_card", "receive_card", "rotate_hand"}
-
 
     def __init__(self, players: Iterable[Player], draw_pile: CardPile, who_starts: int):
         self.players = deque(players)
@@ -31,45 +66,18 @@ class Board:
         self.effect_multiplier = 1
         self.player_index = who_starts
 
-    def play_turn(self) -> None:
-        current_player = self.players[self.player_index]
+    def __repr__(self) -> str:
+        game_state_str = (f"Game State: ({self.play_order}, Flipped?: {self.cards_are_flipped}" 
+                          f"Multiplier: {self.effect_multiplier}, whose turn: {self.player_index})")
+        if self.cards_are_flipped:
+            return self.__repr_invisible() + game_state_str
+        return self.__repr_visible() + game_state_str
 
-        self.executePlayerAction(current_player)
+    def __repr_invisible(self) -> str:
+        return "\n".join(player.repr_invisible_hand() for player in self.players) + "\n"
 
-        self.player_index += 1
-        self.player_index %= len(self.players)
-
-    def executePlayerAction(self, player: Player):
-        # TRIPLE DISPATCH
-        # 1. Choosing player method based on user input
-        # - Doing a dictionary lookup based on user input
-        # 2. Choosing the input selecting method which asks the user for inputs about the action they want to execute
-        # - Doing a dictionary lookup based on action_name
-        # 3. Execute the method which asks for user input
-        # 4. Execute the player action with given input
-
-        # not_played_legal_move = True
-        # while not_played_legal_move:
-        #     action_name = ""
-        #     while not hasattr(player, action_name) or action_name in Board.INVALID_ACTIONS:
-        #         if action_name == "exit":
-        #             raise InterruptedError("Quiting game!")
-        #         action_name = input("What would you like to do? ").lower()
-        #
-        #     if action_name == "pickup":
-        #         player.pickup(self.play_pile)
-        #         return None
-        #     if action_name == "pop_from_hand":
-        #         index = input("What card INDEX would you like to play?")
-        #
-        #         if not player.hand.is_valid_card_index(index):
-        #             continue
-        #
-        #         if not self.is_legal_play(player.hand[index]):
-        #             print(f"That card cannot be played on top of {self.play_pile}")
-        #             continue
-
-        return None
+    def __repr_visible(self) -> str:
+        return "\n".join(player.__repr__() for player in self.players) + "\n"
 
     def play_card(self, card: Card) -> None:
         self.play_pile.add_card_to_top(card)
