@@ -1,5 +1,8 @@
 from typing import Iterable
 
+from bisect import insort
+from heapq import merge as heapq_merge
+
 from src.cards import Card, Cards
 
 
@@ -18,4 +21,12 @@ class Hand(Cards):
 
     def shuffle(self) -> None:
         super().shuffle()
+        return None
+
+    def add_card(self, card: Card) -> None:
+        insort(self, card)
+        return None
+
+    def add_cards(self, cards: Cards) -> None:
+        self[:] = list(heapq_merge(self, sorted(cards)))
         return None

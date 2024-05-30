@@ -6,16 +6,34 @@ from enum import Enum
 from typing import Iterable, TypeVar
 
 
+type CardValueCounts = dict[CardValue, int]
+
+
 class Card:
     def __init__(self, suit: CardSuit, value: CardValue):
         self.__suit = suit
         self.__value = value
+
+    def __hash__(self):
+        return hash((self.value, self.suit.name))
 
     def __repr__(self) -> str:
         return f"{CARD_VALUE_NAMES[self.__value.value]}{self.__suit}"
 
     def __eq__(self, other: Card) -> bool:
         return self.suit == other.suit and self.value == other.value
+
+    def __gt__(self, other: Card) -> bool:
+        return self.value.value > other.value.value
+
+    def __lt__(self, other: Card) -> bool:
+        return self.value.value < other.value.value
+
+    def __ge__(self, other: Card) -> bool:
+        return self.value.value >= other.value.value
+
+    def __le__(self, other: Card) -> bool:
+        return self.value.value <= other.value.value
 
     @property
     def suit(self) -> CardSuit:
@@ -35,6 +53,9 @@ class Cards(list[Card]):
             super().__init__([])
         else:
             super().__init__(cards)
+
+    def __hash__(self):
+        return hash(tuple(self))
 
     def repr_flipped(self):
         unknowns = ["??" for _ in self]
@@ -66,6 +87,9 @@ class Cards(list[Card]):
     def contains(self, cards: Cards) -> bool:
         return len(self.search(cards)) == len(cards)
 
+    def is_exclusively(self, card_value: CardValue) -> bool:
+        return all(card.value == card_value for card in self)
+
     def search(self, cards: Cards) -> list[int]:
         # TODO Use binary search to speed it up a BIT
         target_cards = cards.copy()
@@ -95,6 +119,9 @@ class Cards(list[Card]):
 
     def get(self, indices: list[int]) -> Cards:
         return Cards((self[i] for i in indices))
+
+    def count_value(self, target_value: CardValue) -> int:
+        return sum(1 if card.value == target_value else 0 for card in self)
 
 
 class CardSuit:
@@ -138,3 +165,23 @@ SUITS = (CardSuit(CardColor.RED, "Hearts", "♥"),
          CardSuit(CardColor.RED, "Diamonds", "♦"),
          CardSuit(CardColor.BLACK, "Clubs", "♣"),
          CardSuit(CardColor.BLACK, "Spades", "♠"))
+
+
+def non_six_value(counts: CardValueCounts) -> CardValue:
+    keys = list(counts.keys())
+    card_value1 = keys[0]
+    card_value2 = keys[1]
+    return card_value1 if card_value1 != CardValue.SIX else card_value2
+
+
+def non_six_value_from_cards(cards: Cards) -> CardValue:
+    for card in cards:
+        if card.value != CardValue.SIX:
+            return card.value
+    raise TypeError(f"All cards are six or the cards are empty: {cards}")
+
+
+if __name__ == "__main__":
+    three = Card(SUITS[0], CardValue.THREE)
+    seven = Card(SUITS[0], CardValue.SEVEN)
+    assert seven >= three

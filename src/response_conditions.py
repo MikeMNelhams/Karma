@@ -42,13 +42,31 @@ class IsWithinRange(ResponseCondition):
 
 
 class IsNumberSelection(ResponseCondition):
-    def __init__(self, lower: int, upper: int, max_selection_count: int):
+    def __init__(self, lower: int, upper: int, max_selection_count: int, min_selection_count: int=1, exclude: int | None | set[int]=None):
         self.lower = lower
         self.upper = upper
+        self.min_selection_count = min_selection_count
         self.max_selection_count = max_selection_count
+        self.exclude = exclude
 
     def __call__(self, response: list[int]) -> bool:
-        return all(self.lower <= x <= self.upper for x in response) and len(response) <= self.max_selection_count
+        valid_selection_count = self.min_selection_count <= len(response) <= self.max_selection_count
+
+        exclude_check = self.__equals
+        if isinstance(self.exclude, set):
+            exclude_check = self.__in_set
+
+        if self.exclude is not None:
+            return all(self.lower <= x <= self.upper and not exclude_check(x, self.exclude) for x in response) and valid_selection_count
+        return all(self.lower <= x <= self.upper for x in response) and valid_selection_count
 
     def output_type(self) -> TypeCaster | None:
         return lambda x: [int(x) for x in re_findall(r"[\w']+", x)]
+
+    @staticmethod
+    def __in_set(x: int, y: set[int]) -> bool:
+        return x in y
+
+    @staticmethod
+    def __equals(x: int, y: int) -> bool:
+        return x == y

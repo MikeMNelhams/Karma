@@ -34,6 +34,15 @@ def print_row(number_of_chars: int=50, char: str= '-') -> None:
     return None
 
 
+def print_top_and_bottom_rows(func: callable, char='-', number_of_chars: int = 40) -> callable:
+    def wrapper(*args, **kwargs):
+        print_row(char, number_of_chars)
+        func(*args, **kwargs)
+        print_row(char, number_of_chars)
+
+    return wrapper
+
+
 def clear_all_text() -> None:
     os.system('cls' if os.name == 'nt' else "printf '\033c'")
     return None

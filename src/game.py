@@ -1,43 +1,43 @@
-from typing import Iterable
+from collections import defaultdict
 
-from src.player import Player
-from src.cards import Card, Cards, CardValue, SUITS
-from src.hand import Hand
-from src.poop import PoopFaceDown, PoopFaceUp
-from src.card_pile import CardPile
+from src.cards import Cards
 from src.board import Board
-from src.board_printer import BoardPrinter
+from src.board_printer import BoardPrinter, BoardPrinterDebug
+from src.board_seeds import BoardFactory
 from src.player_actions import PlayerAction, PlayCardsCombo, PickUpPlayPile
 from src.controller import Controller
 import src.response_conditions as rc
 
 
+class GameWonException(Exception):
+    def __init__(self, game_ranks: list[int]):
+        message = f"Player {game_ranks[0]} wins!\nOverall Rankings: {game_ranks}"
+        super().__init__(message)
+
+
+class GameTurnLimitExceededException(Exception):
+    def __init__(self, game_ranks: list[int], turn_limit: int):
+        message = f"Max turn limit of {turn_limit} has been hit!\nPlayer {game_ranks[0]} wins!\nOverall Rankings: {game_ranks}"
+        super().__init__(message)
+
+
 class Game:
-    def __init__(self, number_of_players: int, number_of_jokers: int = 1, who_starts: int = 0):
-        jokers = Cards(Card(SUITS[i % len(SUITS)], CardValue.JOKER) for i in range(number_of_jokers))
-        deck = Cards(Card(SUITS[i], CardValue(j)) for j in range(2, 15) for i in range(len(SUITS)))
-        deck.shuffle()
-
-        face_down_poops = [PoopFaceDown(deck.pop_multiple([i * 3, i * 3 + 1, i * 3 + 2]))
-                           for i in range(number_of_players)]
-        deck.add_cards(jokers)
-        del jokers
-        deck.shuffle()
-        face_up_poops = [PoopFaceUp(deck.pop_multiple([i * 3, i * 3 + 1, i * 3 + 2]))
-                         for i in range(number_of_players)]
-        hands = [Hand(deck.pop_multiple([i * 3, i * 3 + 1, i * 3 + 2])) for i in range(number_of_players)]
-
-        players = [Player(h, fdp, fup) for h, fdp, fup in zip(hands, face_down_poops, face_up_poops)]
-        draw_pile = CardPile(deck)
-
-        self.board = Board(players, draw_pile, who_starts)
-        self.boardPrinter = BoardPrinter(self.board)
+    def __init__(self, number_of_players: int, number_of_jokers: int = 1, who_starts: int = 0, turn_limit: int = 100,
+                 board_printer=BoardPrinter):
+        self.turn_limit = turn_limit
+        self.board: Board = BoardFactory(Board).random_start(number_of_players, number_of_jokers, who_starts)
+        self.boardPrinter = board_printer(self.board)
         self.controller = Controller()
 
-        self.board.register_on_burn_listener(self.play_turn)  # You get another go after burning
+        self.game_ranks = {i: len(player) for i, player in enumerate(self.board.players)}
+
+        self.board.register_on_end_turn_event(self.__step_one_turn)  # Try to step a turn first
+        self.board.register_on_end_turn_event(self.__play_turn_again_if_burned_this_turn)  # Get another go if burned
+        self.board.register_on_end_turn_event(self.__check_if_winner)  # Raise an exception if game-end condition met
 
         self.__possible_actions: dict[str, PlayerAction] = {"pickup": PickUpPlayPile(),
                                                             "play_cards": PlayCardsCombo(self.__card_selection_getter)}
+        self.__number_of_jokers = number_of_jokers
 
     def mulligan_all(self) -> None:
         for i in range(len(self.board.players)):
@@ -76,7 +76,11 @@ class Game:
     def play_turn(self) -> None:
         self.print(self.board.player_index)
 
+        self.board.start_turn()
+
         actions = self.__possible_actions.copy()
+        print(f"Legal moves from {self.board.current_player.playable_cards}:")
+        print(self.board.current_legal_combos)
         for action_name in self.__possible_actions:
             if not actions[action_name].is_valid(self.board):
                 actions.pop(action_name)
@@ -92,32 +96,103 @@ class Game:
             action_name = action_names[0]
         else:
             action_name = self.controller.ask_user([f"What action would you like to do: ({"/".join(action_names)})"],
-                                                   [rc.IsInSet(set(action_names))])
-        action = self.__possible_actions[action_name]
-        action(self.board)
-        self.print(self.board.player_index)
-        raise NameError(f"The action name: {action_name} does not exist. Something wrong has occurred.")
+                                                   [rc.IsInSet(set(action_names))])[0]
+
+        action: PlayerAction = self.__possible_actions[action_name].copy()
+        action(self.board, controller=self.controller, board_printer=self.boardPrinter)
+        self.board.end_turn()
+        return None
 
     def play(self) -> None:
-        for _ in range(8):
+        for _ in range(self.turn_limit * len(self.board.players) + 1):
             self.play_turn()
         return None
+
+    @property
+    def number_of_potential_winners(self) -> int:
+        return sum(1 if len(player) == 0 else 0 for player in self.board.players)
 
     def __card_selection_getter(self) -> Cards:
         card_indices_selected = self.controller.ask_user(["What card indices do you want to play?"],
                                                          [rc.IsNumberSelection(0,
                                                                                len(self.board.current_player.playable_cards) - 1,
                                                                                len(self.board.current_player.playable_cards))])
-        card_indices_selected = card_indices_selected[0]
-        return self.board.current_player.playable_cards.get(card_indices_selected)
+        return self.board.current_player.playable_cards.get(card_indices_selected[0])
+
+    def __play_turn_again_if_burned_this_turn(self, board: Board) -> None:
+        if not board.get_player(board.player_index_who_started_turn).has_cards:
+            return None
+        if board.has_burned_this_turn:
+            board.set_player_index(board.player_index_who_started_turn)
+            self.play_turn()
+        return None
+
+    @staticmethod
+    def __step_one_turn(board: Board) -> None:
+        board.set_player_index((board.player_index + 1) % len(board.players))
+        return None
+
+    def __check_if_winner(self, board: Board) -> None:
+        self.__update_game_ranks(board)
+        number_of_potential_winners = self.number_of_potential_winners
+        if number_of_potential_winners == 1 and board.number_of_jokers_in_play == 0:
+            raise GameWonException(self.game_ranks)
+
+        if number_of_potential_winners == 2:
+            if board.number_of_jokers_in_play == 0:
+                raise GameWonException(self.game_ranks)
+
+            votes = defaultdict(int)
+            joker_counts = {}
+            for player_index, player in enumerate(board.players):
+                joker_count = board.get_player().number_of_jokers
+                if joker_count > 0:
+                    joker_counts[player_index] = joker_count
+            potential_winners_indices = self.game_ranks[0]
+            player_indices_to_exclude_from_vote = {x for x in range(len(board.players))} - potential_winners_indices
+            for player_index, number_of_votes in joker_counts.items():
+                board.set_player_index(player_index)
+                player_vote = self.controller.ask_user([f"Hi player: {player_index}. Who do you want to win?"],
+                                                       [rc.IsNumberSelection(0, len(board.players),
+                                                                             max_selection_count=1,
+                                                                             exclude=player_indices_to_exclude_from_vote)])
+                votes[player_vote[0]] += number_of_votes
+            print(f"Votes: {votes}")
+            most_votes = max(votes.values())
+            player_indices_with_most_votes = [player_index for player_index, count in votes.items() if count == most_votes]
+
+            for player_index in player_indices_with_most_votes:
+                self.game_ranks[player_index] = 0
+
+            raise GameWonException(self.game_ranks)
+
+        if number_of_potential_winners == self.__number_of_jokers:
+            raise GameWonException(self.game_ranks)
+
+        if board.turns_played >= self.turn_limit:
+            raise GameTurnLimitExceededException(self.game_ranks, self.turn_limit)
+
+        return None
+
+    def __update_game_ranks(self, board: Board) -> None:
+        card_counts = defaultdict(set)
+        for i, player in enumerate(board.players):
+            card_counts[len(player)].add(i)
+
+        ranks = [(card_count, player_indices) for card_count, player_indices in card_counts.items()]
+        ranks.sort(key=lambda x: x[0])
+        self.game_ranks = {}
+        for rank, pair in enumerate(ranks):
+            for player_index in pair[1]:
+                self.game_ranks[player_index] = rank
+        return None
 
 
 def main():
-    game = Game(4)
+    game = Game(4, board_printer=BoardPrinterDebug)
     game.mulligan_all()
     game.choose_start_direction()
     game.play()
-
 
 
 if __name__ == "__main__":
