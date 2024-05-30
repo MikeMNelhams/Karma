@@ -14,6 +14,9 @@ class Card:
     def __repr__(self) -> str:
         return f"{CARD_VALUE_NAMES[self.__value.value]}{self.__suit}"
 
+    def __eq__(self, other: Card) -> bool:
+        return self.suit == other.suit and self.value == other.value
+
     @property
     def suit(self) -> CardSuit:
         return self.__suit
@@ -59,6 +62,39 @@ class Cards(list[Card]):
     def shuffle(self) -> None:
         random.shuffle(self)
         return None
+
+    def contains(self, cards: Cards) -> bool:
+        return len(self.search(cards)) == len(cards)
+
+    def search(self, cards: Cards) -> list[int]:
+        # TODO Use binary search to speed it up a BIT
+        target_cards = cards.copy()
+        self_copy = self.copy()
+        indices = []
+        for i in range(len(target_cards) - 1, -1, -1):
+            target_card = target_cards[i]
+            for j in range(len(self_copy) - 1, -1, -1):
+                card_checking = self_copy[j]
+                if target_card == card_checking:
+                    indices.append(j)
+                    target_cards.pop(i)
+                    self_copy.pop(j)
+        return indices
+
+    def remove(self, cards: Cards) -> Cards:
+        target_cards = cards.copy()
+        removed_cards = Cards()
+        for i in range(len(target_cards) - 1, -1, -1):
+            target_card = target_cards[i]
+            for j in range(len(self) - 1, -1, -1):
+                card_checking = self[j]
+                if target_card == card_checking:
+                    target_cards.pop(i)
+                    removed_cards.add_card(self.pop(j))
+        return removed_cards
+
+    def get(self, indices: list[int]) -> Cards:
+        return Cards((self[i] for i in indices))
 
 
 class CardSuit:

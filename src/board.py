@@ -2,46 +2,13 @@ from __future__ import annotations
 
 from typing import Any, Callable, Iterable
 
-from abc import ABC, abstractmethod
 from enum import Enum
 
 from collections import deque
 
 from src.cards import Cards, Card, CardValue
-from src.hand import Hand
 from src.player import Player
 from src.card_pile import CardPile, PlayCardPile
-from src.controller import Controller
-
-
-class PlayerAction(ABC):
-    @abstractmethod
-    def is_valid(self, board: Board, player_index: int) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
-    def _get_arguments_from_user(self, board: Board, controller: Controller) -> tuple[Any]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def __call__(self, board: Board) -> None:
-        raise NotImplementedError
-
-    def name(self):
-        return self.__class__.__name__
-
-
-class PickUpPlayPile(PlayerAction):
-    def is_valid(self, board: Board, player_index: int) -> bool:
-        if board.player_index != player_index:
-            return False
-        return len(board.play_pile) > 0
-
-    def _get_arguments_from_user(self, board: Board, controller: Controller) -> tuple[Any]:
-        return tuple()
-
-    def __call__(self, board: Board) -> None:
-        player = board.player_index
 
 
 class BoardPlayOrder(Enum):
@@ -63,12 +30,38 @@ class Board:
         self.cards_are_flipped = False
         self.effect_multiplier = 1
         self.player_index = who_starts
+        self.turns_played = 0
+
+        self.__on_burn_events = []
 
     def get_player(self, player_index: int) -> Player:
         return self.players[player_index]
 
+    @property
+    def current_player(self) -> Player:
+        return self.get_player(self.player_index)
+
     def increment_player_index(self, increment: int=1) -> None:
         self.player_index += increment
+
+    def flip_turn_order(self) -> None:
+        for i in range(1, min(self.player_index + 1, len(self.players) - self.player_index) + 1):
+            self.players[self.player_index + i], self.players[self.player_index - i] = self.players[self.player_index - i], self.players[self.player_index + i]
+        return None
+
+    def end_turn(self) -> None:
+        self.increment_player_index()
+        self.turns_played += 1
+        return None
+
+    def register_on_burn_listener(self, on_burn_event: Callable) -> None:
+        self.__on_burn_events.append(on_burn_event)
+        return None
+
+    def __trigger_on_burn_listeners(self) -> None:
+        for event in self.__on_burn_events:
+            event(self)
+        return None
 
     def play_card(self, card: Card) -> None:
         self.play_pile.add_card(card)
@@ -138,8 +131,7 @@ class Board:
     def __play_eight(self) -> None:
         if self.effect_multiplier != 1:
             return None
-        for i in range(1, min(self.player_index + 1, len(self.players) - self.player_index) + 1):
-            self.players[self.player_index + i], self.players[self.player_index - i] = self.players[self.player_index - i], self.players[self.player_index + i]
+        self.flip_turn_order()
         return None
 
     def __play_nine(self) -> None:
@@ -149,7 +141,7 @@ class Board:
     def __play_ten(self) -> None:
         self.effect_multiplier = 1
         self.play_order = 1 - self.play_order
-        self.burn(is_joker=False)
+        self.burn(is_joker=False, player_who_burned_index=self.player_index)
         return None
 
     def __play_jack(self) -> None:
@@ -173,7 +165,7 @@ class Board:
 
     def __play_joker(self) -> None:
         self.burn_pile.add_card(self.play_pile[-1])
-        self.burn(is_joker=True)
+        self.burn(is_joker=True, player_who_burned_index=self.player_index)
 
         index = -1
         while not (0 <= index <= len(self.players)):
@@ -182,13 +174,15 @@ class Board:
         self.players[index].pickup(self.play_pile)
         return None
 
-    def burn(self, is_joker: bool) -> None:
+    def burn(self, is_joker: bool, player_who_burned_index: int) -> None:
         if is_joker:
             self.burn_pile.add_card(self.burn_pile.pop())
+            self.__trigger_on_burn_listeners()
             return None
         self.burn_pile.add_cards(self.play_pile)
         self.play_pile.clear()
-        self.increment_player_index(-1)
+        self.player_index = player_who_burned_index
+        self.__trigger_on_burn_listeners()
         return None
 
     def is_legal_play(self, play_card: Card) -> bool:

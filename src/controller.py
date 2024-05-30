@@ -1,5 +1,3 @@
-from typing import Callable
-
 from response_conditions import ResponseCondition
 
 
@@ -24,5 +22,3 @@ class Controller:
                 answered_correctly = output_check(current_response)
             responses.append(current_response)
         return responses
-
-

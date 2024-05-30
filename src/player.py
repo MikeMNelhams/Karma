@@ -1,6 +1,4 @@
-from typing import Iterable
-
-from src.cards import Card
+from src.cards import Card, Cards
 from src.card_pile import CardPile
 from src.hand import Hand
 from src.poop import PoopFaceUp, PoopFaceDown
@@ -21,39 +19,36 @@ class Player:
     def __repr_poop(self) -> str:
         return f"FUP{self.poop_face_up}, FDP{self.poop_face_down.repr_flipped()}"
 
+    @property
+    def has_cards(self) -> bool:
+        return len(self.hand) + len(self.poop_face_up) + len(self.poop_face_down) != 0
+
+    @property
+    def playable_cards(self) -> Cards:
+        if len(self.hand) > 0:
+            return self.hand
+        if len(self.poop_face_up) > 0:
+            return self.poop_face_up
+        if len(self.poop_face_down) > 0:
+            return self.poop_face_down
+        return Cards()
+
     def pickup(self, pile: CardPile) -> None:
         self.hand.add_cards(pile)
         pile.clear()
         return None
 
-    def pop_from_hand(self, index: int) -> Card:
-        return self.hand.pop_card(index)
-
-    def pop_from_hand_multiple(self, indices: Iterable[int]) -> None:
-        return self.hand.pop_cards(indices)
+    def pop_from_playable(self, indices: list[int]) -> Cards:
+        removed = self.playable_cards.pop_multiple(indices)
+        return removed
 
     def swap_hand_card_with_poop(self, hand_index: int, poop_index: int) -> None:
         self.hand[hand_index], self.poop_face_up[poop_index] = self.poop_face_up[poop_index], self.hand[hand_index]
         return None
 
-    def pop_from_face_up_poop(self, index: int) -> None:
-        self.poop_face_up.pop_card(index)
-        return None
-
-    def pop_multiple_from_face_up_poop(self, indices: Iterable[int]) -> None:
-        self.poop_face_up.pop_multiple(indices)
-        return None
-
-    def pop_from_face_down_poop(self, index: int) -> None:
-        self.poop_face_down.pop_card(index)
-        return None
-
-    def pop_multiple_from_face_down_poop(self, indices: Iterable[int]) -> None:
-        self.poop_face_down.pop_multiple(indices)
-        return None
-
     def draw_card(self, pile: CardPile) -> None:
         self.hand.add_card(pile.pop_card(-1))
+        return None
 
     def receive_card(self, card: Card) -> None:
         self.hand.add_card(card)
@@ -63,3 +58,7 @@ class Player:
         hand_before_rotation = self.hand
         self.hand = hand
         return hand_before_rotation
+
+    def shuffle_hand(self) -> None:
+        self.hand.shuffle()
+        return None
