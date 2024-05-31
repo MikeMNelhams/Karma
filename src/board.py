@@ -138,7 +138,7 @@ class Board(IBoard):
             return set()
 
         if self.cards_are_flipped:
-            return {tuple([card.value]) for card in cards}
+            return set(tuple([card.value]) for card in cards)
 
         if not self.play_pile or self._play_pile.visible_top_card is None:
             return equal_subsequence_permutations_with_filler_and_filter(cards, CardValue.SIX, self.__is_joker, 3)
