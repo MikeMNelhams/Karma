@@ -20,7 +20,11 @@ class Controller:
                 current_response = input(f"{prompt} ")
                 if current_response.lower() == "quit":
                     raise InterruptedError("Exiting program")
-                current_response = cast_to_type(current_response)
-                answered_correctly = output_check(current_response)
+                try:
+                    current_response = cast_to_type(current_response)
+                    answered_correctly = output_check(current_response)
+                except ValueError as e:
+                    current_response = -1
+                    answered_correctly = False
             responses.append(current_response)
         return responses
