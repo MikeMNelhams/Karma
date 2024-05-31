@@ -26,8 +26,8 @@ class BoardFactory:
         players = [Player(h, fuk, fdk) for h, fuk, fdk in zip(hands, face_down_karmas, face_up_karmas)]
         return self.__board_constructor(draw_pile=CardPile(deck), players=players, who_starts=who_starts)
 
-    def matrix_start(self, players_card_values: list[list[list[int]]], draw_pile_values: list[int]):
+    def matrix_start(self, players_card_values: list[list[list[int]]], draw_pile_values: list[int], who_starts: int=0):
         suit = SUITS[1]
         players = [Player.from_card_values(card_values) for card_values in players_card_values]
         draw_pile = CardPile(Cards([Card(suit, CardValue(x)) for x in draw_pile_values]))
-        return self.__board_constructor(players=players, draw_pile=draw_pile)
+        return self.__board_constructor(players=players, draw_pile=draw_pile, who_starts=who_starts)
