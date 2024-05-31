@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from abc import ABC, ABCMeta, abstractmethod
 
-from typing import Callable, Deque, Iterable
+from typing import Deque, Iterable
 
 from enum import Enum
 
-from src.cards import Card, Cards, CardValue
+from src.cards import Card, Cards
 from src.card_pile import CardPile, PlayCardPile
 from src.player import Player
 from src.controller import Controller
@@ -110,6 +110,10 @@ class IBoard(IBoardState):
         raise NotImplementedError
 
     @abstractmethod
+    def start_turn(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def end_turn(self) -> None:
         raise NotImplementedError
 
@@ -154,7 +158,7 @@ class IBoard(IBoardState):
 
     @property
     @abstractmethod
-    def current_legal_combos(self) -> set[list[CardValue]]:
+    def current_legal_combos(self) -> set:
         raise NotImplementedError
 
     @property

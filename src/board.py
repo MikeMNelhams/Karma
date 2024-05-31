@@ -5,7 +5,8 @@ from typing import Iterable, Deque, Callable
 from collections import deque
 
 from src.utils.multiset import FrozenMultiset
-from src.card_combo_permuations import equal_subsequence_permutations_with_filler, equal_subsequence_permutations_with_filler_and_filter
+from src.card_combo_permuations import (equal_subsequence_permutations_with_filler,
+                                        equal_subsequence_permutations_with_filler_and_filter)
 from src.cards import Cards, Card, CardValue
 from src.player import Player
 from src.card_pile import CardPile, PlayCardPile
@@ -25,8 +26,8 @@ class Board(IBoard):
     __always_legal_cards_values = {CardValue.FOUR, CardValue.TWO}
     __filler_card = CardValue.SIX
 
-    def __init__(self, players: Iterable[Player], draw_pile: CardPile | None=None,
-                 burn_pile: CardPile | None=None, play_pile: PlayCardPile | None=None,
+    def __init__(self, players: Iterable[Player], draw_pile: CardPile | None = None,
+                 burn_pile: CardPile | None = None, play_pile: PlayCardPile | None = None,
                  play_order: BoardPlayOrder = BoardPlayOrder.UP, turn_order: BoardTurnOrder = BoardTurnOrder.RIGHT,
                  cards_are_flipped: bool = False, effect_multiplier: int = 1, who_starts: int = 0,
                  has_burned_this_turn: bool = False, turns_played: int = 0):
@@ -52,7 +53,7 @@ class Board(IBoard):
         self.__card_combo_factory = CardComboFactory()
         self._has_burned_this_turn = False
 
-        self.__current_legal_combos: set[Cards] = set()
+        self.__current_legal_combos = set()
         self.player_index_who_started_turn = who_starts
 
         self.__number_of_jokers_in_play = self.__count_in_play_jokers()
@@ -133,7 +134,7 @@ class Board(IBoard):
         if joker_count > 0:
             cards_to_burn = self.play_pile.pop_multiple(list(range(len(self.play_pile) - joker_count, len(self.play_pile))))
             self.set_number_of_jokers_in_play(self.number_of_jokers_in_play - cards_to_burn.count_value(CardValue.JOKER))
-            self.burn_pile.add_card(cards_to_burn)
+            self.burn_pile.add_cards(cards_to_burn)
             self._has_burned_this_turn = True
             return None
         self.burn_pile.add_cards(self.play_pile)
@@ -147,7 +148,7 @@ class Board(IBoard):
             return False
         return cards.values in self.current_legal_combos
 
-    def legal_combos_from_cards(self, cards: Cards) -> set[list[CardValue]]:
+    def legal_combos_from_cards(self, cards: Cards) -> set:
         if not cards:
             return set()
 
@@ -251,7 +252,7 @@ class Board(IBoard):
         return self._combo_history
 
     @property
-    def current_legal_combos(self) -> set[list[CardValue]]:
+    def current_legal_combos(self) -> set:
         return self.__current_legal_combos
 
     @staticmethod

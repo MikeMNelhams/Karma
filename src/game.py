@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from src.cards import Cards
 from src.board import Board
-from src.board_interface import BoardTurnOrder
+from src.board_interface import BoardTurnOrder, IBoard
 from src.board_printer import BoardPrinter
 from src.board_seeds import BoardFactory
 from src.player_actions import PlayerAction, PlayCardsCombo, PickUpPlayPile
@@ -23,7 +23,7 @@ class GameTurnLimitExceededException(Exception):
 
 
 class Game:
-    def __init__(self, start_board: Board=None, turn_limit: int = 100,
+    def __init__(self, start_board: IBoard=None, turn_limit: int = 100,
                  board_printer=BoardPrinter):
         self.turn_limit = turn_limit
         if start_board is None:
@@ -54,7 +54,7 @@ class Game:
         return None
 
     def _mulligan_player(self, player_index: int) -> None:
-        player = self.board.get_player(player_index)
+        player = self.board.players[player_index]
         user_wants_to_mulligan = self.controller.ask_user(["Would you like to mulligan? (Y/N)"],
                                                           [rc.IsYesOrNo()])[0] == "y"
 
