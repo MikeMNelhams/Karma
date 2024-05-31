@@ -6,7 +6,7 @@ from src.board_printer import BoardPrinter, BoardPrinterDebug
 from src.board_seeds import BoardFactory
 from src.player_actions import PlayerAction, PlayCardsCombo, PickUpPlayPile
 from src.controller import Controller
-import src.response_conditions as rc
+from src import response_conditions as rc
 
 
 class GameWonException(Exception):
@@ -59,7 +59,7 @@ class Game:
             mulligan_swap = self.controller.ask_user(
                 ["Which HAND card index would you like to swap?", "Which FUP card index would you like to swap?"],
                 [rc.IsWithinRange(0, 3), rc.IsWithinRange(0, 2)])
-            player.swap_hand_card_with_poop(mulligan_swap[0], mulligan_swap[1])
+            player.swap_hand_card_with_karma(mulligan_swap[0], mulligan_swap[1])
             self.print(player_index)
             user_wants_to_mulligan = self.controller.ask_user(["Would you like to mulligan? (Y/N)"],
                                                               [rc.IsYesOrNo()])[0] == "y"
@@ -195,10 +195,7 @@ class Game:
 
 
 def main():
-    game = Game(4, board_printer=BoardPrinter)
-    game.mulligan_all()
-    game.choose_start_direction()
-    game.play()
+    print("No longer the main, try running \'example_code.py\' instead!")
 
 
 if __name__ == "__main__":

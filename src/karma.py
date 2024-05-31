@@ -3,7 +3,7 @@ from typing import Iterable
 from src.cards import Card, Cards
 
 
-class Poop(Cards):
+class Karma(Cards):
     def __init__(self, cards: Iterable[Card]):
         super().__init__(cards)
 
@@ -15,7 +15,7 @@ class Poop(Cards):
         return self.pop_multiple(indices)
 
 
-class PoopFaceUp(Poop):
+class KarmaFaceUp(Karma):
     def __init__(self, cards: Cards):
         super().__init__(cards)
 
@@ -23,6 +23,6 @@ class PoopFaceUp(Poop):
         return self.swap(index, card)
 
 
-class PoopFaceDown(Poop):
+class KarmaFaceDown(Karma):
     def __init__(self, cards: Cards):
         super().__init__(cards)
