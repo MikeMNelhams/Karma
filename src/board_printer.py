@@ -48,6 +48,7 @@ def _repr_players(board: IBoard, select_index: int=None, debug: bool=False) -> I
                    (colour_green(x) if i == select_index else
                     (colour_blue(x) if i == board.player_index else x))
                    for i, x in enumerate(player_str)]
+    players_str = [f"{x} {i}" for x, i in enumerate(players_str)]
     return players_str
 
 
