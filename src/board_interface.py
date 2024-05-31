@@ -17,6 +17,11 @@ class BoardPlayOrder(Enum):
     DOWN = 1
 
 
+class BoardTurnOrder(Enum):
+    LEFT = -1
+    RIGHT = 1
+
+
 class IBoard(ABC):
     @property
     @abstractmethod
@@ -41,6 +46,11 @@ class IBoard(ABC):
     @property
     @abstractmethod
     def play_order(self) -> BoardPlayOrder:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def turn_order(self) -> BoardTurnOrder:
         raise NotImplementedError
 
     @property
@@ -108,6 +118,10 @@ class IBoard(ABC):
 
     @abstractmethod
     def set_player_index(self, new_index: int) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def step_player_index(self, number_of_steps: int) -> None:
         raise NotImplementedError
 
     @property

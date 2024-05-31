@@ -11,7 +11,7 @@ import src.response_conditions as rc
 
 class GameWonException(Exception):
     def __init__(self, game_ranks: list[int]):
-        message = f"Player {game_ranks[0]} wins!\nOverall Rankings: {game_ranks}"
+        message = f"Overall Rankings: {game_ranks}"
         super().__init__(message)
 
 
@@ -25,6 +25,7 @@ class Game:
     def __init__(self, number_of_players: int, number_of_jokers: int = 1, who_starts: int = 0, turn_limit: int = 100,
                  board_printer=BoardPrinter):
         self.turn_limit = turn_limit
+        # self.board: Board = BoardFactory(Board).random_start(number_of_players, number_of_jokers, who_starts)
         self.board: Board = BoardFactory(Board).random_start(number_of_players, number_of_jokers, who_starts)
         self.boardPrinter = board_printer(self.board)
         self.controller = Controller()
@@ -113,10 +114,14 @@ class Game:
         return sum(1 if len(player) == 0 else 0 for player in self.board.players)
 
     def __card_selection_getter(self) -> Cards:
-        card_indices_selected = self.controller.ask_user(["What card indices do you want to play?"],
-                                                         [rc.IsNumberSelection(0,
-                                                                               len(self.board.current_player.playable_cards) - 1,
-                                                                               len(self.board.current_player.playable_cards))])
+        lower_bound = 0
+        upper_bound = len(self.board.current_player.playable_cards) - 1
+        max_selection = len(self.board.current_player.playable_cards)
+        prompt = f"What card indices do you want to play? From[{lower_bound}, {upper_bound}] - Pick up to {max_selection}"
+        card_indices_selected = self.controller.ask_user([prompt],
+                                                         [rc.IsNumberSelection(lower_bound,
+                                                                               upper_bound,
+                                                                               max_selection)])
         selected_cards = self.board.current_player.playable_cards.get(card_indices_selected[0])
         return selected_cards
 
@@ -130,7 +135,7 @@ class Game:
 
     @staticmethod
     def __step_one_turn(board: Board) -> None:
-        board.set_player_index((board.player_index + 1) % len(board.players))
+        board.step_player_index(1)
         return None
 
     def __check_if_winner(self, board: Board) -> None:
@@ -146,7 +151,7 @@ class Game:
             votes = defaultdict(int)
             joker_counts = {}
             for player_index, player in enumerate(board.players):
-                joker_count = board.get_player().number_of_jokers
+                joker_count = board.get_player(player_index).number_of_jokers
                 if joker_count > 0:
                     joker_counts[player_index] = joker_count
             potential_winners_indices = self.game_ranks[0]
@@ -167,7 +172,7 @@ class Game:
 
             raise GameWonException(self.game_ranks)
 
-        if number_of_potential_winners == self.__number_of_jokers:
+        if number_of_potential_winners == len(board.players) - self.__number_of_jokers:
             raise GameWonException(self.game_ranks)
 
         if board.turns_played >= self.turn_limit:
@@ -190,7 +195,7 @@ class Game:
 
 
 def main():
-    game = Game(4, board_printer=BoardPrinterDebug)
+    game = Game(4, board_printer=BoardPrinter)
     game.mulligan_all()
     game.choose_start_direction()
     game.play()

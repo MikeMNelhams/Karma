@@ -61,7 +61,7 @@ class Combo_5(CardCombo):
     @staticmethod
     def __hand_rotates(board: IBoard, hands: deque[Hand], number_of_rotations: int) -> None:
         for _ in range(number_of_rotations):
-            hands.rotate(1)
+            hands.rotate(1 * board.turn_order.value)
             for i in range(len(board.players)):
                 board.players[i].hand = hands[i]
         return None
@@ -93,8 +93,7 @@ class Combo_9(CardCombo):
         if board.play_pile.will_burn:
             return None
         number_of_repeats = len(self) * board.effect_multiplier
-        board.set_player_index(board.player_index + number_of_repeats)
-        board.set_player_index(board.player_index % len(board.players))
+        board.step_player_index(number_of_repeats)
         return None
 
 
@@ -108,7 +107,7 @@ class Combo_Jack(CardCombo):
     def __call__(self, board: IBoard) -> None:
         if len(board.play_pile) <= len(self.cards):
             return None
-        board.play_cards(Cards([board.play_pile[-1 - len(self)]]))
+        board.play_cards(Cards([board.play_pile[-1 - len(self)]]), self.controller, self.board_printer)
         return None
 
 
@@ -153,7 +152,7 @@ class Combo_King(CardCombo):
         for card in cards_to_play:
             if card.value == CardValue.JOKER:
                 board.set_number_of_jokers_in_play(board.number_of_jokers_in_play - 1)
-            board.play_cards(card)
+            board.play_cards(Cards([card]))
         return None
 
 

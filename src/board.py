@@ -10,7 +10,7 @@ from src.cards import Cards, Card, CardValue
 from src.player import Player
 from src.card_pile import CardPile, PlayCardPile
 from src.card_combos import CardComboFactory
-from src.board_interface import BoardPlayOrder, IBoard, IBoardPrinter
+from src.board_interface import BoardPlayOrder, BoardTurnOrder, IBoard, IBoardPrinter
 from src.controller import Controller
 
 
@@ -32,6 +32,7 @@ class Board(IBoard):
         self._play_pile = PlayCardPile([])
 
         self._play_order = BoardPlayOrder.UP
+        self._turn_order = BoardTurnOrder.RIGHT
         self._cards_are_flipped = False
         self._effect_multiplier = 1
         self._player_index = who_starts
@@ -44,7 +45,9 @@ class Board(IBoard):
         self.__current_legal_combos: set[Cards] = set()
         self.player_index_who_started_turn = who_starts
 
-        self.__number_of_jokers_in_play = sum(player.number_of_jokers for player in self.players)
+        joker_count_in_draw_pile = self.draw_pile.count_value(CardValue.JOKER)
+        joker_count_in_players = sum(player.number_of_jokers for player in self.players)
+        self.__number_of_jokers_in_play = joker_count_in_players + joker_count_in_draw_pile
 
     def get_player(self, player_index: int) -> Player:
         return self.players[player_index]
@@ -53,13 +56,16 @@ class Board(IBoard):
     def current_player(self) -> Player:
         return self.get_player(self.player_index)
 
-    def increment_player_index(self, increment: int=1) -> None:
-        self._player_index += increment
+    def step_player_index(self, number_of_steps: int) -> None:
+        self._player_index += self.turn_order.value * number_of_steps
+        self._player_index %= len(self.players)
         return None
 
     def flip_turn_order(self) -> None:
-        for i in range(1, min(self.player_index + 1, len(self.players) - self.player_index) + 1):
-            self.players[self.player_index + i], self.players[self.player_index - i] = self.players[self.player_index - i], self.players[self.player_index + i]
+        if self._turn_order == BoardTurnOrder.RIGHT:
+            self._turn_order = BoardTurnOrder.LEFT
+        else:
+            self._turn_order = BoardTurnOrder.RIGHT
         return None
 
     def reset_play_order(self) -> None:
@@ -104,7 +110,7 @@ class Board(IBoard):
         self.play_pile.add_cards(cards)
         self.__draw_until_full()
         self.card_combo_factory.set_counts(cards)
-        combo = self.card_combo_factory.create_combo(cards, controller, board_printer)
+        combo = self.card_combo_factory.create_combo(cards, controller=controller, board_printer=board_printer)
         combo(self)
         return True
 
@@ -131,7 +137,7 @@ class Board(IBoard):
             return set()
 
         if self.cards_are_flipped:
-            return {Cards([x]) for x in cards}
+            return {tuple([card.value]) for card in cards}
 
         if not self.play_pile or self._play_pile.visible_top_card is None:
             return equal_subsequence_permutations_with_filler_and_filter(cards, CardValue.SIX, self.__is_joker, 3)
@@ -150,6 +156,7 @@ class Board(IBoard):
 
     def set_player_index(self, new_index: int) -> None:
         self._player_index = new_index
+        self._player_index %= len(self.players)
         return None
 
     def __draw_until_full(self) -> None:
@@ -160,6 +167,8 @@ class Board(IBoard):
         if len(player.hand) >= 3:
             return None
         for _ in range(3 - len(player.hand)):
+            if not self.draw_pile:
+                return None
             player.draw_card(self._draw_pile)
         return None
 
@@ -182,6 +191,10 @@ class Board(IBoard):
     @property
     def play_order(self) -> BoardPlayOrder:
         return self._play_order
+
+    @property
+    def turn_order(self) -> BoardTurnOrder:
+        return self._turn_order
 
     @property
     def cards_are_flipped(self) -> bool:
@@ -217,7 +230,7 @@ class Board(IBoard):
 
     @property
     def game_info_repr(self) -> str:
-        return (f"{self.play_order}, Flipped?: {self.cards_are_flipped}, "
+        return (f"{self.play_order}, {self.turn_order}, Flipped?: {self.cards_are_flipped}, "
                 f"Multiplier: {self.effect_multiplier}, Whose turn?: {self.player_index}, "
                 f"#turns played: {self.turns_played}, burned this turn?: {self.has_burned_this_turn}")
 

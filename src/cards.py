@@ -72,8 +72,10 @@ class Cards(list[Card]):
         return None
 
     def pop_multiple(self, indices: Iterable[int]) -> Cards:
-        self[:] = [card for i, card in enumerate(self) if i not in set(indices)]
-        return Cards((card for i, card in enumerate(self) if i in set(indices)))
+        excluded_indices = set(indices)
+        output = Cards((card for i, card in enumerate(self) if i in excluded_indices))
+        self[:] = [card for i, card in enumerate(self) if i not in excluded_indices]
+        return output
 
     def swap(self, index: int, card: Card) -> Card:
         card_before = self[index]

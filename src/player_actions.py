@@ -71,7 +71,7 @@ class PlayCardsCombo(PlayerAction):
             self.__get_cards()
         cards_to_play = player.playable_cards.remove(self.cards)
         print(f"Selected VALID cards to play: {cards_to_play}")
-        board.play_cards(cards_to_play, controller, board_printer)
+        board.play_cards(cards_to_play, controller=controller, board_printer=board_printer)
         return None
 
     def copy(self):
