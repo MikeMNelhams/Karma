@@ -4,11 +4,11 @@ from src.utils.multiset import FrozenMultiset
 from src.cards import Cards, CardValue
 
 
-def equal_subsequence_permutations(seq: Cards) -> set[list[CardValue]]:
+def equal_subsequence_permutations(seq: Cards) -> set[FrozenMultiset]:
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
-        return set(FrozenMultiset([seq[0].value]))
+        return FrozenMultiset([seq[0].value])
 
     count = defaultdict(int)
 
@@ -22,11 +22,11 @@ def equal_subsequence_permutations(seq: Cards) -> set[list[CardValue]]:
 
 def equal_subsequence_permutations_with_filler(seq: Cards,
                                                filler: CardValue,
-                                               minimum_to_filler: int=2) -> set[list[CardValue]]:
+                                               minimum_to_filler: int=2) -> set[FrozenMultiset]:
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
-        return set(FrozenMultiset([seq[0].value]))
+        return FrozenMultiset([seq[0].value])
 
     count = defaultdict(int)
     outputs = set()
@@ -51,13 +51,13 @@ def equal_subsequence_permutations_with_filler(seq: Cards,
 def equal_subsequence_permutations_with_filler_and_filter(seq: Cards,
                                                           filler: CardValue,
                                                           _filter: callable,
-                                                          minimum_to_filler: int=2) -> set[frozenset[CardValue]]:
+                                                          minimum_to_filler: int=2) -> set[FrozenMultiset]:
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
         if _filter(seq[0]):
             return set()
-        return set(FrozenMultiset([seq[0].value]))
+        return FrozenMultiset([seq[0].value])
 
     count = defaultdict(int)
     outputs = set()

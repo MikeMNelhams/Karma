@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 
 from typing import Deque
 
@@ -22,7 +22,11 @@ class BoardTurnOrder(Enum):
     RIGHT = 1
 
 
-class IBoard(ABC):
+class IBoardState(metaclass=ABCMeta):
+    @abstractmethod
+    def __init__(self, **kwargs):
+        raise NotImplementedError
+
     @property
     @abstractmethod
     def players(self) -> Deque[Player]:
@@ -67,6 +71,14 @@ class IBoard(ABC):
     @abstractmethod
     def player_index(self) -> int:
         raise NotImplementedError
+
+
+class IBoard(IBoardState):
+
+
+
+
+
 
     @property
     @abstractmethod
