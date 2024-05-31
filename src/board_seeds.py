@@ -1,5 +1,3 @@
-from typing import Any, Callable
-
 from src.cards import Card, Cards, CardValue, SUITS
 from src.hand import Hand
 from src.karma import KarmaFaceDown, KarmaFaceUp
@@ -7,11 +5,9 @@ from src.card_pile import CardPile
 from src.player import Player
 from src.board_interface import IBoard
 
-type BoardConstructor = Callable[[Any], IBoard]
-
 
 class BoardFactory:
-    def __init__(self, board_constructor: BoardConstructor):
+    def __init__(self, board_constructor):
         self.__board_constructor = board_constructor
 
     def random_start(self, number_of_players: int, number_of_jokers: int = 1, who_starts: int=0) -> IBoard:
