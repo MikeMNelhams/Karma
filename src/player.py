@@ -1,6 +1,6 @@
 from typing import Self
 
-from src.cards import Card, Cards, CardValue
+from src.cards import Card, Cards, CardValue, SUITS
 from src.card_pile import CardPile
 from src.hand import Hand
 from src.karma import KarmaFaceUp, KarmaFaceDown
@@ -9,7 +9,7 @@ from src.karma import KarmaFaceUp, KarmaFaceDown
 class Player:
     playable_options = {Hand: 0, KarmaFaceDown: 1, KarmaFaceUp: 2}
 
-    def __init__(self, starting_hand: Hand, starting_face_down_karma: KarmaFaceDown, starting_face_up_karma: KarmaFaceUp):
+    def __init__(self, starting_hand: Hand, starting_face_up_karma: KarmaFaceUp, starting_face_down_karma: KarmaFaceDown):
         self.hand = starting_hand
         self.hand.sort()
         self.karma_face_down = starting_face_down_karma
@@ -95,3 +95,11 @@ class Player:
         if self.karma_face_down:
             total += self.karma_face_down.count_value(CardValue.JOKER)
         return total
+
+    @classmethod
+    def from_card_values(cls, player_matrix: list[list[int]]) -> Self:
+        suit = SUITS[0]
+        hand = Hand(Cards([Card(suit, CardValue(x)) for x in player_matrix[0]]))
+        kfu = KarmaFaceUp(Cards([Card(suit, CardValue(x)) for x in player_matrix[1]]))
+        kfd = KarmaFaceDown(Cards([Card(suit, CardValue(x)) for x in player_matrix[2]]))
+        return cls(hand, kfu, kfd)
