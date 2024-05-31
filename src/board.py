@@ -12,6 +12,7 @@ from src.cards import Cards, Card, CardValue
 from src.player import Player
 from src.card_pile import CardPile, PlayCardPile
 from src.card_combos import CardComboFactory, Combo_3
+from src.board_state import BoardState
 from src.board_interface import BoardPlayOrder, BoardTurnOrder, IBoard, IBoardPrinter
 from src.controller import Controller
 
@@ -27,19 +28,16 @@ class Board(IBoard):
     __always_legal_cards_values = {CardValue.FOUR, CardValue.TWO}
     __filler_card = CardValue.SIX
 
-    def __init__(self, players: Iterable[Player], draw_pile: CardPile, who_starts: int):
-        self._players = deque(players)
-        self._draw_pile = draw_pile
-
-        self._burn_pile = CardPile([])
-        self._play_pile = PlayCardPile([])
-
-        self._play_order = BoardPlayOrder.UP
-        self._turn_order = BoardTurnOrder.RIGHT
-        self._cards_are_flipped = False
-        self._effect_multiplier = 1
-        self._player_index = who_starts
-        self._combo_history = []
+    def __init__(self, board_state: BoardState):
+        self._players = board_state.players
+        self._draw_pile = board_state.draw_pile
+        self._burn_pile = board_state.burn_pile
+        self._play_pile = board_state.play_pile
+        self._play_order = board_state.play_order
+        self._turn_order = board_state.turn_order
+        self._cards_are_flipped = board_state.cards_are_flipped
+        self._effect_multiplier = board_state.effect_multiplier
+        self._player_index = board_state.player_index
 
         self.__on_end_turn_events: list[OnEndTurnEvent] = []
         self.__card_combo_factory = CardComboFactory()
@@ -47,9 +45,11 @@ class Board(IBoard):
 
         self.turns_played = 0
         self.__current_legal_combos: set[Cards] = set()
-        self.player_index_who_started_turn = who_starts
+        self.player_index_who_started_turn = board_state.player_index
 
         self.__number_of_jokers_in_play = self.__count_in_play_jokers()
+
+        self._combo_history = []
 
     def get_player(self, player_index: int) -> Player:
         return self.players[player_index]

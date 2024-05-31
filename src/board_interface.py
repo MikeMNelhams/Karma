@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, ABCMeta, abstractmethod
 
-from typing import Deque
+from typing import Deque, Iterable
 
 from enum import Enum
 
@@ -24,7 +24,7 @@ class BoardTurnOrder(Enum):
 
 class IBoardState(metaclass=ABCMeta):
     @abstractmethod
-    def __init__(self, **kwargs):
+    def __init__(self, players: Iterable[Player], **kwargs):
         raise NotImplementedError
 
     @property
@@ -72,17 +72,15 @@ class IBoardState(metaclass=ABCMeta):
     def player_index(self) -> int:
         raise NotImplementedError
 
-
-class IBoard(IBoardState):
-
-
-
-
-
-
     @property
     @abstractmethod
     def has_burned_this_turn(self) -> bool:
+        raise NotImplementedError
+
+
+class IBoard(IBoardState):
+    @abstractmethod
+    def __init__(self, board_state: IBoardState):
         raise NotImplementedError
 
     @property

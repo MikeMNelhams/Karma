@@ -2,6 +2,7 @@ from collections import defaultdict
 
 from src.cards import Cards
 from src.board import Board
+from src.board_state import BoardState
 from src.board_interface import BoardTurnOrder
 from src.board_printer import BoardPrinter, BoardPrinterDebug
 from src.board_seeds import BoardFactory
@@ -26,8 +27,7 @@ class Game:
     def __init__(self, number_of_players: int, number_of_jokers: int = 1, who_starts: int = 0, turn_limit: int = 100,
                  board_printer=BoardPrinter):
         self.turn_limit = turn_limit
-        # self.board: Board = BoardFactory(Board).random_start(number_of_players, number_of_jokers, who_starts)
-        self.board: Board = BoardFactory(Board).random_start(number_of_players, number_of_jokers, who_starts)
+        self.board: Board = BoardFactory(BoardState, Board).random_start(number_of_players, number_of_jokers, who_starts)
         self.boardPrinter = board_printer(self.board)
         self.controller = Controller()
 

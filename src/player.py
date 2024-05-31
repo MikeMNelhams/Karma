@@ -1,3 +1,5 @@
+from typing import Self
+
 from src.cards import Card, Cards, CardValue
 from src.card_pile import CardPile
 from src.hand import Hand

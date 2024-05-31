@@ -17,7 +17,7 @@ class CardPile(Cards):
 
     @classmethod
     def empty(cls) -> Self:
-        return CardPile([])
+        return cls([])
 
 
 class PlayCardPile(CardPile):
