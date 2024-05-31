@@ -123,6 +123,10 @@ class Cards(list[Card]):
     def count_value(self, target_value: CardValue) -> int:
         return sum(1 if card.value == target_value else 0 for card in self)
 
+    @property
+    def values(self) -> tuple[CardValue]:
+        return tuple(card.value for card in self)
+
 
 class CardSuit:
     def __init__(self, colour: CardColor, name: str, shorthand: str):
@@ -155,6 +159,9 @@ class CardValue(Enum):
     ACE = 14
     JOKER = 15
 
+    def __repr__(self) -> str:
+        return f"{self.name}"
+
 
 CARD_VALUE_NAMES = ({x: str(x) for x in range(2, 10)} |
                     {10: "T", 11: "J", 12: "Q", 13: "K", 14: "A",
@@ -182,6 +189,7 @@ def non_six_value_from_cards(cards: Cards) -> CardValue:
 
 
 if __name__ == "__main__":
-    three = Card(SUITS[0], CardValue.THREE)
-    seven = Card(SUITS[0], CardValue.SEVEN)
-    assert seven >= three
+    three1 = Card(SUITS[0], CardValue.THREE)
+    three2 = Card(SUITS[1], CardValue.THREE)
+    x = {three1, three2}
+    print(x)

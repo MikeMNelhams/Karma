@@ -1,14 +1,11 @@
-from typing import Hashable, TypeVar
+from typing import Hashable
 
 from collections import defaultdict
 
-from src.cards import Cards
+from src.cards import Cards, CardValue
 
 
-C = TypeVar('C')
-
-
-def equal_subsequence_permutations(seq: Hashable) -> set:
+def equal_subsequence_permutations(seq: Cards) -> set[list[CardValue]]:
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
@@ -17,13 +14,16 @@ def equal_subsequence_permutations(seq: Hashable) -> set:
     count = defaultdict(int)
 
     outputs = set()
-    for x in seq:
-        count[x] += 1
-        outputs.add(Cards(x for _ in range(count[x])))
+    for card in seq:
+        key = card.value
+        count[key] += 1
+        outputs.add(tuple(key for _ in range(count[key])))
     return outputs
 
 
-def equal_subsequence_permutations_with_filler(seq: Hashable, filler: int, minimum_to_filler: int=2) -> set:
+def equal_subsequence_permutations_with_filler(seq: Cards,
+                                               filler: CardValue,
+                                               minimum_to_filler: int=2) -> set[list[CardValue]]:
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
@@ -31,9 +31,10 @@ def equal_subsequence_permutations_with_filler(seq: Hashable, filler: int, minim
 
     count = defaultdict(int)
     outputs = set()
-    for x in seq:
-        count[x] += 1
-        outputs.add(Cards(x for _ in range(count[x])))
+    for card in seq:
+        key = card.value
+        count[key] += 1
+        outputs.add(tuple(key for _ in range(count[key])))
 
     filler_count = count[filler]
     if filler_count == 0:
@@ -48,7 +49,10 @@ def equal_subsequence_permutations_with_filler(seq: Hashable, filler: int, minim
     return outputs | outputs_that_include_filler
 
 
-def equal_subsequence_permutations_with_filler_and_filter(seq: Hashable, filler: int, _filter: callable, minimum_to_filler: int=2) -> set:
+def equal_subsequence_permutations_with_filler_and_filter(seq: Cards,
+                                                          filler: CardValue,
+                                                          _filter: callable,
+                                                          minimum_to_filler: int=2) -> set[list[CardValue]]:
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
@@ -56,11 +60,12 @@ def equal_subsequence_permutations_with_filler_and_filter(seq: Hashable, filler:
 
     count = defaultdict(int)
     outputs = set()
-    for x in seq:
-        count[x] += 1
-        if _filter(x):
+    for card in seq:
+        key = card.value
+        count[key] += 1
+        if _filter(card):
             continue
-        outputs.add(Cards(x for _ in range(count[x])))
+        outputs.add(tuple(key for _ in range(count[key])))
 
     filler_count = count[filler]
     if filler_count == 0:
@@ -70,6 +75,6 @@ def equal_subsequence_permutations_with_filler_and_filter(seq: Hashable, filler:
         if len(output) < minimum_to_filler:
             continue
         for i in range(1, filler_count+1):
-            outputs_that_include_filler.add(Cards(list(output) + [filler for _ in range(i)]))
+            outputs_that_include_filler.add(tuple(list(output) + [filler for _ in range(i)]))
 
     return outputs | outputs_that_include_filler

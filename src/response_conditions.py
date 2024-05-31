@@ -42,7 +42,8 @@ class IsWithinRange(ResponseCondition):
 
 
 class IsNumberSelection(ResponseCondition):
-    def __init__(self, lower: int, upper: int, max_selection_count: int, min_selection_count: int=1, exclude: int | None | set[int]=None):
+    def __init__(self, lower: int, upper: int, max_selection_count: int, min_selection_count: int=1,
+                 exclude: int | set[int] | None=None):
         self.lower = lower
         self.upper = upper
         self.min_selection_count = min_selection_count

@@ -6,7 +6,7 @@ from typing import Deque
 
 from enum import Enum
 
-from src.cards import Card, Cards
+from src.cards import Card, Cards, CardValue
 from src.card_pile import CardPile, PlayCardPile
 from src.player import Player
 from src.controller import Controller
@@ -126,7 +126,7 @@ class IBoard(ABC):
 
     @property
     @abstractmethod
-    def current_legal_combos(self) -> set[Cards]:
+    def current_legal_combos(self) -> set[list[CardValue]]:
         raise NotImplementedError
 
 

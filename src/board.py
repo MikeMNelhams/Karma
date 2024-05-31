@@ -124,9 +124,9 @@ class Board(IBoard):
         self.__card_combo_factory.set_counts(cards)
         if not self.__card_combo_factory.is_valid_combo():
             return False
-        return cards in self.current_legal_combos
+        return cards.values in self.current_legal_combos
 
-    def legal_combos_from_cards(self, cards: Cards) -> set[Cards]:
+    def legal_combos_from_cards(self, cards: Cards) -> set[list[CardValue]]:
         if not cards:
             return set()
 
@@ -134,15 +134,15 @@ class Board(IBoard):
             return {Cards([x]) for x in cards}
 
         if not self.play_pile or self._play_pile.visible_top_card is None:
-            return equal_subsequence_permutations_with_filler_and_filter(cards, 6, self.__is_joker, 3)
+            return equal_subsequence_permutations_with_filler_and_filter(cards, CardValue.SIX, self.__is_joker, 3)
 
         top_card: Card = self._play_pile.visible_top_card
         comparison = self.__playable_card_comparisons[self.play_order]
         valid_cards = Cards(card for card in cards if card.value in self.__always_legal_cards_values or comparison(card, top_card))
 
         if top_card.value == CardValue.ACE:
-            return equal_subsequence_permutations_with_filler(valid_cards, 6, 3)
-        return equal_subsequence_permutations_with_filler_and_filter(valid_cards, 6, self.__is_joker, 3)
+            return equal_subsequence_permutations_with_filler(valid_cards, CardValue.SIX, 3)
+        return equal_subsequence_permutations_with_filler_and_filter(valid_cards, CardValue.SIX, self.__is_joker, 3)
 
     def set_effect_multiplier(self, new_multiplier: int) -> None:
         self._effect_multiplier = new_multiplier
@@ -212,7 +212,7 @@ class Board(IBoard):
         return None
 
     @property
-    def current_legal_combos(self) -> set[Cards]:
+    def current_legal_combos(self) -> set[list[CardValue]]:
         return self.__current_legal_combos
 
     @property

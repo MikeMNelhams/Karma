@@ -117,7 +117,8 @@ class Game:
                                                          [rc.IsNumberSelection(0,
                                                                                len(self.board.current_player.playable_cards) - 1,
                                                                                len(self.board.current_player.playable_cards))])
-        return self.board.current_player.playable_cards.get(card_indices_selected[0])
+        selected_cards = self.board.current_player.playable_cards.get(card_indices_selected[0])
+        return selected_cards
 
     def __play_turn_again_if_burned_this_turn(self, board: Board) -> None:
         if not board.get_player(board.player_index_who_started_turn).has_cards:

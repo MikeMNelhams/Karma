@@ -67,7 +67,7 @@ class PlayCardsCombo(PlayerAction):
     def __call__(self, board: IBoard, controller: Controller = None, board_printer: IBoardPrinter | None = None) -> None:
         player = board.current_player
 
-        while self.cards is None or self.cards not in board.current_legal_combos:
+        while self.cards is None or self.cards.values not in board.current_legal_combos:
             self.__get_cards()
         cards_to_play = player.playable_cards.remove(self.cards)
         print(f"Selected VALID cards to play: {cards_to_play}")
