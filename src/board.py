@@ -4,6 +4,8 @@ from typing import Callable, Iterable
 
 from collections import deque
 
+from src.utils.multiset import FrozenMultiset
+
 from src.card_combo_permuations import equal_subsequence_permutations_with_filler, equal_subsequence_permutations_with_filler_and_filter
 
 from src.cards import Cards, Card, CardValue
@@ -47,9 +49,7 @@ class Board(IBoard):
         self.__current_legal_combos: set[Cards] = set()
         self.player_index_who_started_turn = who_starts
 
-        joker_count_in_draw_pile = self.draw_pile.count_value(CardValue.JOKER)
-        joker_count_in_players = sum(player.number_of_jokers for player in self.players)
-        self.__number_of_jokers_in_play = joker_count_in_players + joker_count_in_draw_pile
+        self.__number_of_jokers_in_play = self.__count_in_play_jokers()
 
     def get_player(self, player_index: int) -> Player:
         return self.players[player_index]
@@ -144,7 +144,7 @@ class Board(IBoard):
             return set()
 
         if self.cards_are_flipped:
-            return set(frozenset([card.value]) for card in cards)
+            return set(FrozenMultiset([card.value]) for card in cards)
 
         if not self.play_pile or self._play_pile.visible_top_card is None:
             return equal_subsequence_permutations_with_filler_and_filter(cards, CardValue.SIX, self.__is_joker, 3)
@@ -261,3 +261,8 @@ class Board(IBoard):
 
     def __is_always_valid(self, card: Card) -> bool:
         return card in self.__always_legal_cards_values
+
+    def __count_in_play_jokers(self) -> int:
+        joker_count_in_draw_pile = self.draw_pile.count_value(CardValue.JOKER)
+        joker_count_in_players = sum(player.number_of_jokers for player in self.players)
+        return joker_count_in_draw_pile + joker_count_in_players

@@ -1,3 +1,5 @@
+from typing import Self
+
 from cards import Card, Cards, CardValue
 
 
@@ -12,6 +14,10 @@ class CardPile(Cards):
         output = self[:split_index]
         self[:] = self[split_index:]
         return output
+
+    @classmethod
+    def empty(cls) -> Self:
+        return CardPile([])
 
 
 class PlayCardPile(CardPile):

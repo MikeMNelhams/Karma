@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 
 from typing import Callable
 
+from src.utils.multiset import FrozenMultiset
+
 from src.cards import Cards
 from src.board_interface import IBoard, IBoardPrinter
 from src.controller import Controller
@@ -68,7 +70,7 @@ class PlayCardsCombo(PlayerAction):
     def __call__(self, board: IBoard, controller: Controller = None, board_printer: IBoardPrinter | None = None) -> None:
         player = board.current_player
 
-        while self.cards is None or frozenset(self.cards.values) not in board.current_legal_combos:
+        while self.cards is None or FrozenMultiset(self.cards.values) not in board.current_legal_combos:
             self.__get_cards()
         cards_to_play = player.playable_cards.remove(self.cards)
         print(f"Selected VALID cards to play: {cards_to_play}")

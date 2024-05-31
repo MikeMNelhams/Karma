@@ -174,7 +174,7 @@ class Combo_Ace(CardCombo):
 class Combo_Joker(CardCombo):
     def __call__(self, board: IBoard) -> None:
         board.burn(joker_count=len(self))
-        player_index = self.controller.ask_user(["Who would you like to burn?"],
+        player_index = self.controller.ask_user(["Who would you like to JOKER?"],
                                                 [rc.IsWithinRange(0, len(board.players))])
         board.players[player_index].pickup(board.play_pile)
         return None
