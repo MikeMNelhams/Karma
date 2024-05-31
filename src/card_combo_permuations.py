@@ -8,7 +8,7 @@ def equal_subsequence_permutations(seq: Cards) -> set[FrozenMultiset]:
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
-        return FrozenMultiset([seq[0].value])
+        return {FrozenMultiset([seq[0].value])}
 
     count = defaultdict(int)
 
@@ -26,7 +26,7 @@ def equal_subsequence_permutations_with_filler(seq: Cards,
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
-        return FrozenMultiset([seq[0].value])
+        return {FrozenMultiset([seq[0].value])}
 
     count = defaultdict(int)
     outputs = set()
@@ -57,7 +57,7 @@ def equal_subsequence_permutations_with_filler_and_filter(seq: Cards,
     if len(seq) == 1:
         if _filter(seq[0]):
             return set()
-        return FrozenMultiset([seq[0].value])
+        return {FrozenMultiset([seq[0].value])}
 
     count = defaultdict(int)
     outputs = set()
