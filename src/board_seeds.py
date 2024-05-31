@@ -38,7 +38,7 @@ class BoardFactory:
 
         return self.__board_constructor(players, draw_pile, who_starts)
 
-    def random_fdpfup_only(self, number_of_players: int, number_of_jokers: int = 0, who_starts: int=0) -> IBoard:
+    def random_fdkfuk_only(self, number_of_players: int, number_of_jokers: int = 0, who_starts: int=0) -> IBoard:
         deck = Cards(Card(SUITS[0], CardValue(j)) for j in range(2, 15))
         deck.shuffle()
 
@@ -53,7 +53,7 @@ class BoardFactory:
 
         return self.__board_constructor(players, draw_pile, who_starts)
 
-    def random_fdpfup_only_with_jokers(self, number_of_players: int, number_of_jokers: int = 1, who_starts: int=0) -> IBoard:
+    def random_fdkfuk_only_with_jokers(self, number_of_players: int, number_of_jokers: int = 1, who_starts: int=0) -> IBoard:
         jokers = Cards(Card(SUITS[i % len(SUITS)], CardValue.JOKER) for i in range(number_of_jokers))
         deck = Cards(Card(SUITS[0], CardValue(j)) for j in range(2, 15))
         deck.add_cards(jokers)

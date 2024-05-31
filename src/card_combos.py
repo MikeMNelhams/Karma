@@ -107,6 +107,10 @@ class Combo_Jack(CardCombo):
     def __call__(self, board: IBoard) -> None:
         if len(board.play_pile) <= len(self.cards):
             return None
+
+        if board.play_pile.visible_top_card.value == CardValue.JACK:
+            return None
+
         board.play_cards(Cards([board.play_pile[-1 - len(self)]]), self.controller, self.board_printer)
         return None
 

@@ -9,7 +9,7 @@ def equal_subsequence_permutations(seq: Cards) -> set[list[CardValue]]:
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
-        return {seq}
+        return set(tuple([seq[0].value]))
 
     count = defaultdict(int)
 
@@ -27,7 +27,7 @@ def equal_subsequence_permutations_with_filler(seq: Cards,
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
-        return {seq}
+        return set(tuple([seq[0].value]))
 
     count = defaultdict(int)
     outputs = set()
@@ -56,7 +56,7 @@ def equal_subsequence_permutations_with_filler_and_filter(seq: Cards,
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
-        return {seq}
+        return set(tuple([seq[0].value]))
 
     count = defaultdict(int)
     outputs = set()

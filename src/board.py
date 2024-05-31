@@ -23,6 +23,7 @@ class Board(IBoard):
 
     __playable_card_comparisons = {BoardPlayOrder.UP: lambda x, y: x >= y, BoardPlayOrder.DOWN: lambda x, y: x <= y}
     __always_legal_cards_values = {CardValue.FOUR, CardValue.TWO}
+    __filler_card = CardValue.SIX
 
     def __init__(self, players: Iterable[Player], draw_pile: CardPile, who_starts: int):
         self._players = deque(players)
@@ -145,7 +146,6 @@ class Board(IBoard):
         top_card: Card = self._play_pile.visible_top_card
         comparison = self.__playable_card_comparisons[self.play_order]
         valid_cards = Cards(card for card in cards if card.value in self.__always_legal_cards_values or comparison(card, top_card))
-
         if top_card.value == CardValue.ACE:
             return equal_subsequence_permutations_with_filler(valid_cards, CardValue.SIX, 3)
         return equal_subsequence_permutations_with_filler_and_filter(valid_cards, CardValue.SIX, self.__is_joker, 3)
@@ -245,3 +245,9 @@ class Board(IBoard):
     def __calculate_legal_combos(self, cards) -> None:
         self.__current_legal_combos = self.legal_combos_from_cards(cards)
         return None
+
+    def __cards_possible_on_play_pile(self, test_cards: Cards, top_card: Card, comparison: Callable[[Card, Card], bool]) -> Cards:
+        return Cards(card for card in test_cards if self.__is_always_valid(card) or comparison(card, top_card) or card.value == self.__filler_card)
+
+    def __is_always_valid(self, card: Card) -> bool:
+        return card in self.__always_legal_cards_values
