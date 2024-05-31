@@ -126,7 +126,9 @@ class Cards(list[Card]):
         return sum(1 if card.value == target_value else 0 for card in self)
 
     @property
-    def values(self) -> tuple[CardValue]:
+    def values(self) -> list[CardValue]:
+        if not self:
+            return []
         return tuple(card.value for card in self)
 
 

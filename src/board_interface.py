@@ -147,6 +147,11 @@ class IBoard(ABC):
     def current_legal_combos(self) -> set[list[CardValue]]:
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def combo_history(self) -> list[Cards]:
+        raise NotImplementedError
+
 
 class IBoardPrinter(ABC):
     @abstractmethod

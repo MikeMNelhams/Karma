@@ -16,7 +16,8 @@ class BoardPrinter(IBoardPrinter):
                           f"Play Pile: {board.play_pile}\n"
                           f"Burn Pile: {board.burn_pile}\n"
                           f"Game State: ({board.game_info_repr})")
-        print("\n".join(_repr_players(board, select_index)) + "\n" + game_state_str)
+
+        print("\n".join(_repr_players(board, select_index)) + game_state_str)
         return None
 
 
@@ -31,7 +32,8 @@ class BoardPrinterDebug(IBoardPrinter):
                           f"Play Pile: {board.play_pile}\n"
                           f"Burn Pile: {board.burn_pile}\n"
                           f"Game State: ({board.game_info_repr})")
-        print("\n".join(_repr_players(board, select_index, debug=True)) + "\n" + game_state_str)
+
+        print("\n".join(_repr_players(board, select_index, debug=True)) + f"\nCombo Timeline: {board.combo_history}\n" + game_state_str)
         return None
 
 

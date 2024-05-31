@@ -9,7 +9,7 @@ from src.card_combo_permuations import equal_subsequence_permutations_with_fille
 from src.cards import Cards, Card, CardValue
 from src.player import Player
 from src.card_pile import CardPile, PlayCardPile
-from src.card_combos import CardComboFactory
+from src.card_combos import CardComboFactory, Combo_3
 from src.board_interface import BoardPlayOrder, BoardTurnOrder, IBoard, IBoardPrinter
 from src.controller import Controller
 
@@ -37,6 +37,7 @@ class Board(IBoard):
         self._cards_are_flipped = False
         self._effect_multiplier = 1
         self._player_index = who_starts
+        self._combo_history = []
 
         self.__on_end_turn_events: list[OnEndTurnEvent] = []
         self.__card_combo_factory = CardComboFactory()
@@ -113,6 +114,11 @@ class Board(IBoard):
         self.card_combo_factory.set_counts(cards)
         combo = self.card_combo_factory.create_combo(cards, controller=controller, board_printer=board_printer)
         combo(self)
+
+        if combo.__class__.__name__ != Combo_3.__name__:
+            self.set_effect_multiplier(1)
+
+        self._combo_history.append(cards)
         return True
 
     def burn(self, joker_count: int) -> None:
@@ -138,7 +144,7 @@ class Board(IBoard):
             return set()
 
         if self.cards_are_flipped:
-            return set(tuple([card.value]) for card in cards)
+            return set(frozenset([card.value]) for card in cards)
 
         if not self.play_pile or self._play_pile.visible_top_card is None:
             return equal_subsequence_permutations_with_filler_and_filter(cards, CardValue.SIX, self.__is_joker, 3)
@@ -227,6 +233,10 @@ class Board(IBoard):
     def set_number_of_jokers_in_play(self, number_of_jokers: int) -> None:
         self.__number_of_jokers_in_play = number_of_jokers
         return None
+
+    @property
+    def combo_history(self) -> list[str]:
+        return self._combo_history
 
     @property
     def current_legal_combos(self) -> set[list[CardValue]]:

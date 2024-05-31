@@ -58,7 +58,7 @@ class Game:
 
         while user_wants_to_mulligan:
             mulligan_swap = self.controller.ask_user(
-                ["Which HAND card index would you like to swap?", "Which FUP card index would you like to swap?"],
+                ["Which HAND card index would you like to swap?", "Which FUK card index would you like to swap?"],
                 [rc.IsWithinRange(0, 3), rc.IsWithinRange(0, 2)])
             player.swap_hand_card_with_karma(mulligan_swap[0], mulligan_swap[1])
             self.print(player_index)
