@@ -29,6 +29,10 @@ def colour_cyan(phrase: str) -> str:
     return f"{PrintColors.OKCYAN}{phrase}{PrintColors.ENDC}"
 
 
+def colour_warning(phrase: str) -> str:
+    return f"{PrintColors.WARNING}{phrase}{PrintColors.ENDC}"
+
+
 def print_row(number_of_chars: int=50, char: str= '-') -> None:
     print(char * number_of_chars)
     return None

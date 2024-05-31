@@ -2,9 +2,8 @@ from collections import defaultdict
 
 from src.cards import Cards
 from src.board import Board
-from src.board_state import BoardState
 from src.board_interface import BoardTurnOrder
-from src.board_printer import BoardPrinter, BoardPrinterDebug
+from src.board_printer import BoardPrinter
 from src.board_seeds import BoardFactory
 from src.player_actions import PlayerAction, PlayCardsCombo, PickUpPlayPile
 from src.controller import Controller
@@ -24,10 +23,13 @@ class GameTurnLimitExceededException(Exception):
 
 
 class Game:
-    def __init__(self, number_of_players: int, number_of_jokers: int = 1, who_starts: int = 0, turn_limit: int = 100,
+    def __init__(self, start_board: Board=None, turn_limit: int = 100,
                  board_printer=BoardPrinter):
         self.turn_limit = turn_limit
-        self.board: Board = BoardFactory(BoardState, Board).random_start(number_of_players, number_of_jokers, who_starts)
+        if start_board is None:
+            self.board: Board = BoardFactory(Board).random_start(number_of_players=4)
+        else:
+            self.board = start_board
         self.boardPrinter = board_printer(self.board)
         self.controller = Controller()
 
@@ -39,7 +41,7 @@ class Game:
 
         self.__possible_actions: dict[str, PlayerAction] = {"pickup": PickUpPlayPile(),
                                                             "play_cards": PlayCardsCombo(self.__card_selection_getter)}
-        self.__number_of_jokers = number_of_jokers
+        self.__number_of_jokers = self.board.number_of_jokers_in_play
 
     def mulligan_all(self) -> None:
         for i in range(len(self.board.players)):

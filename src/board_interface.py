@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, ABCMeta, abstractmethod
 
-from typing import Deque, Iterable
+from typing import Callable, Deque, Iterable
 
 from enum import Enum
 
@@ -77,10 +77,15 @@ class IBoardState(metaclass=ABCMeta):
     def has_burned_this_turn(self) -> bool:
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def turns_played(self) -> int:
+        raise NotImplementedError
+
 
 class IBoard(IBoardState):
     @abstractmethod
-    def __init__(self, board_state: IBoardState):
+    def __init__(self, **kwargs):
         raise NotImplementedError
 
     @property
@@ -145,11 +150,6 @@ class IBoard(IBoardState):
 
     @abstractmethod
     def set_number_of_jokers_in_play(self, number_of_jokers: int) -> None:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def game_info_repr(self) -> str:
         raise NotImplementedError
 
     @property

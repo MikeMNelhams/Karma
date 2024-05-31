@@ -176,7 +176,7 @@ class Combo_Joker(CardCombo):
         board.burn(joker_count=len(self))
         player_index = self.controller.ask_user(["Who would you like to JOKER?"],
                                                 [rc.IsWithinRange(0, len(board.players))])
-        board.players[player_index].pickup(board.play_pile)
+        board.players[player_index].pickup(board.play_pile[0])
         return None
 
 

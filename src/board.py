@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from typing import Callable, Iterable
+from typing import Iterable, Deque, Callable
 
 from collections import deque
 
 from src.utils.multiset import FrozenMultiset
-
 from src.card_combo_permuations import equal_subsequence_permutations_with_filler, equal_subsequence_permutations_with_filler_and_filter
-
 from src.cards import Cards, Card, CardValue
 from src.player import Player
 from src.card_pile import CardPile, PlayCardPile
 from src.card_combos import CardComboFactory, Combo_3
-from src.board_state import BoardState
 from src.board_interface import BoardPlayOrder, BoardTurnOrder, IBoard, IBoardPrinter
 from src.controller import Controller
 
@@ -28,24 +25,35 @@ class Board(IBoard):
     __always_legal_cards_values = {CardValue.FOUR, CardValue.TWO}
     __filler_card = CardValue.SIX
 
-    def __init__(self, board_state: BoardState):
-        self._players = board_state.players
-        self._draw_pile = board_state.draw_pile
-        self._burn_pile = board_state.burn_pile
-        self._play_pile = board_state.play_pile
-        self._play_order = board_state.play_order
-        self._turn_order = board_state.turn_order
-        self._cards_are_flipped = board_state.cards_are_flipped
-        self._effect_multiplier = board_state.effect_multiplier
-        self._player_index = board_state.player_index
+    def __init__(self, players: Iterable[Player], draw_pile: CardPile | None=None,
+                 burn_pile: CardPile | None=None, play_pile: PlayCardPile | None=None,
+                 play_order: BoardPlayOrder = BoardPlayOrder.UP, turn_order: BoardTurnOrder = BoardTurnOrder.RIGHT,
+                 cards_are_flipped: bool = False, effect_multiplier: int = 1, who_starts: int = 0,
+                 has_burned_this_turn: bool = False, turns_played: int = 0):
+        self._players = deque(players)
+        self._draw_pile = draw_pile
+        if draw_pile is None:
+            self._draw_pile = CardPile.empty()
+        self._burn_pile = burn_pile
+        if burn_pile is None:
+            self._burn_pile = CardPile.empty()
+        self._play_pile = play_pile
+        if play_pile is None:
+            self._play_pile = PlayCardPile.empty()
+        self._play_order = play_order
+        self._turn_order = turn_order
+        self._cards_are_flipped = cards_are_flipped
+        self._effect_multiplier = effect_multiplier
+        self._player_index = who_starts
+        self._has_burned_this_turn = has_burned_this_turn
+        self._turns_played = turns_played
 
         self.__on_end_turn_events: list[OnEndTurnEvent] = []
         self.__card_combo_factory = CardComboFactory()
         self._has_burned_this_turn = False
 
-        self.turns_played = 0
         self.__current_legal_combos: set[Cards] = set()
-        self.player_index_who_started_turn = board_state.player_index
+        self.player_index_who_started_turn = who_starts
 
         self.__number_of_jokers_in_play = self.__count_in_play_jokers()
 
@@ -92,7 +100,7 @@ class Board(IBoard):
         return None
 
     def end_turn(self) -> None:
-        self.turns_played += 1
+        self._turns_played += 1
         self.__trigger_on_end_turn_events()
         return None
 
@@ -146,10 +154,10 @@ class Board(IBoard):
         if self.cards_are_flipped:
             return set(FrozenMultiset([card.value]) for card in cards)
 
-        if not self.play_pile or self._play_pile.visible_top_card is None:
+        if not self.play_pile or self.play_pile.visible_top_card is None:
             return equal_subsequence_permutations_with_filler_and_filter(cards, CardValue.SIX, self.__is_joker, 3)
 
-        top_card: Card = self._play_pile.visible_top_card
+        top_card: Card = self.play_pile.visible_top_card
         comparison = self.__playable_card_comparisons[self.play_order]
         valid_cards = Cards(card for card in cards if card.value in self.__always_legal_cards_values or comparison(card, top_card))
         if top_card.value == CardValue.ACE:
@@ -175,11 +183,11 @@ class Board(IBoard):
         for _ in range(3 - len(player.hand)):
             if not self.draw_pile:
                 return None
-            player.draw_card(self._draw_pile)
+            player.draw_card(self.draw_pile)
         return None
 
     @property
-    def players(self) -> deque[Player]:
+    def players(self) -> Deque[Player]:
         return self._players
 
     @property
@@ -223,6 +231,10 @@ class Board(IBoard):
         return self._has_burned_this_turn
 
     @property
+    def turns_played(self) -> int:
+        return self._turns_played
+
+    @property
     def card_combo_factory(self) -> CardComboFactory:
         return self.__card_combo_factory
 
@@ -241,12 +253,6 @@ class Board(IBoard):
     @property
     def current_legal_combos(self) -> set[list[CardValue]]:
         return self.__current_legal_combos
-
-    @property
-    def game_info_repr(self) -> str:
-        return (f"{self.play_order}, {self.turn_order}, Flipped?: {self.cards_are_flipped}, "
-                f"Multiplier: {self.effect_multiplier}, Whose turn?: {self.player_index}, "
-                f"#turns played: {self.turns_played}, burned this turn?: {self.has_burned_this_turn}")
 
     @staticmethod
     def __is_joker(card: Card) -> bool:
