@@ -44,7 +44,7 @@ def equal_subsequence_permutations_with_filler(seq: Cards,
         if len(output) < minimum_to_filler:
             continue
         for i in range(1, filler_count+1):
-            outputs_that_include_filler.add(Cards(list(output) + [filler for _ in range(i)]))
+            outputs_that_include_filler.add(tuple(list(output) + [filler for _ in range(i)]))
 
     return outputs | outputs_that_include_filler
 
