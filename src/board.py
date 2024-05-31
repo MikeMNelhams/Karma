@@ -196,6 +196,10 @@ class Board(IBoard):
     def turn_order(self) -> BoardTurnOrder:
         return self._turn_order
 
+    def set_turn_order(self, turn_order: BoardTurnOrder) -> None:
+        self._turn_order = turn_order
+        return None
+
     @property
     def cards_are_flipped(self) -> bool:
         return self._cards_are_flipped

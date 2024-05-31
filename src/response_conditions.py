@@ -52,8 +52,6 @@ class IsNumberSelection(ResponseCondition):
 
     def __call__(self, response: list[int]) -> bool:
         valid_selection_count = self.min_selection_count <= len(response) <= self.max_selection_count
-        print(f"is valid selection count: {valid_selection_count}")
-        print(f"RESPONSE: {response}")
         exclude_check = self.__equals
         if isinstance(self.exclude, set):
             exclude_check = self.__in_set

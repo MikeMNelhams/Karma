@@ -83,6 +83,10 @@ class IBoard(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def set_turn_order(self, turn_order: BoardTurnOrder) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def flip_play_order(self) -> None:
         raise NotImplementedError
 

@@ -2,6 +2,7 @@ from collections import defaultdict
 
 from src.cards import Cards
 from src.board import Board
+from src.board_interface import BoardTurnOrder
 from src.board_printer import BoardPrinter, BoardPrinterDebug
 from src.board_seeds import BoardFactory
 from src.player_actions import PlayerAction, PlayCardsCombo, PickUpPlayPile
@@ -69,9 +70,9 @@ class Game:
         self.print(self.board.player_index)
         direction = self.controller.ask_user(["Which direction do you want to go? (<--- L or R --->)"],
                                              [rc.IsInSet({"l", "r"})])
-        if direction == "r":
-            return None
-        self.board.flip_turn_order()
+        if direction[0].lower() == "r":
+            return self.board.set_turn_order(BoardTurnOrder.RIGHT)
+        self.board.set_turn_order(BoardTurnOrder.LEFT)
         return None
 
     def play_turn(self) -> None:
