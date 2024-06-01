@@ -97,10 +97,10 @@ class PlayCardPile(CardPile):
         if len(self) < k:
             return False
         total_run = 1
-        major_value = self[-1]
+        major_value = self[-1].value
 
         for card in reversed(self[:-1]):
-            if card.value == major_value.value:
+            if card.value == major_value:
                 total_run += 1
             else:
                 total_run = 1
