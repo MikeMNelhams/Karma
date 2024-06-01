@@ -15,10 +15,16 @@ class BoardPrinter(IBoardPrinter):
         game_state_str = (f"Draw Pile: {board.draw_pile.repr_flipped()}\n"
                           f"Play Pile: {board.play_pile}\n"
                           f"Burn Pile: {board.burn_pile}\n"
-                          f"Game State: ({_repr_game_info(board)})")
+                          f"Game State: ({self._repr_game_info(board)})")
 
         print("\n".join(_repr_players(board, select_index)) + game_state_str)
         return None
+
+    @staticmethod
+    def _repr_game_info(board: IBoard):
+        return (f"{board.play_order}, {board.turn_order}, Flipped?: {board.cards_are_flipped}, "
+                f"Multiplier: {board.effect_multiplier}, Whose turn?: {board.player_index}, "
+                f"#turns played: {board.turns_played}, burned this turn?: {board.has_burned_this_turn}")
 
 
 class BoardPrinterDebug(IBoardPrinter):
@@ -31,14 +37,14 @@ class BoardPrinterDebug(IBoardPrinter):
         game_state_str = (f"Draw Pile: {board.draw_pile}\n"
                           f"Play Pile: {board.play_pile}\n"
                           f"Burn Pile: {board.burn_pile}\n"
-                          f"Game State: ({_repr_game_info(board)})")
+                          f"Game State: ({self._repr_game_info(board)})")
 
         print("\n".join(_repr_players(board, select_index, debug=True)) + f"\nCombo Timeline: {board.combo_history}\n" + game_state_str)
         return None
 
-
-def _repr_game_info(board: IBoard):
-    return (f"{board.play_order}, {board.turn_order}, Flipped?: {board.cards_are_flipped}, "
+    @staticmethod
+    def _repr_game_info(board: IBoard):
+        return (f"{board.play_order}, {board.turn_order}, Flipped?: {colour_warning(board.cards_are_flipped)}, "
                 f"Multiplier: {board.effect_multiplier}, Whose turn?: {board.player_index}, "
                 f"#turns played: {board.turns_played}, burned this turn?: {board.has_burned_this_turn}")
 
