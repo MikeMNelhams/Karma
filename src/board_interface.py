@@ -120,11 +120,11 @@ class IBoard(IBoardState):
     @abstractmethod
     def play_cards(self, cards: Cards,
                    controller: Controller | None = None,
-                   board_printer: IBoardPrinter | None = None) -> bool:
+                   board_printer: IBoardPrinter | None = None, add_to_play_pile: bool=True) -> bool:
         raise NotImplementedError
 
     @abstractmethod
-    def burn(self, *args) -> None:
+    def burn(self, *args, **kwargs) -> None:
         raise NotImplementedError
 
     @abstractmethod

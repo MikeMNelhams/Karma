@@ -3,7 +3,7 @@ from src.hand import Hand
 from src.karma import KarmaFaceDown, KarmaFaceUp
 from src.card_pile import CardPile, PlayCardPile
 from src.player import Player
-from src.board_interface import IBoard
+from src.board_interface import IBoard, BoardTurnOrder, BoardPlayOrder
 
 
 class BoardFactory:
@@ -28,7 +28,9 @@ class BoardFactory:
 
     def matrix_start(self, players_card_values: list[list[list[int]]], draw_pile_values: list[int],
                      play_pile_values: list[int] | None = None, burn_pile_values: list[int] | None = None,
-                     who_starts: int=0, cards_are_flipped: bool = False, start_effect_multiplier: int = 1):
+                     who_starts: int=0, cards_are_flipped: bool = False, start_effect_multiplier: int = 1,
+                     turn_order: BoardTurnOrder = BoardTurnOrder.RIGHT,
+                     play_order: BoardPlayOrder = BoardPlayOrder.UP):
         play_pile = PlayCardPile.empty()
         if play_pile_values is not None:
             play_pile = PlayCardPile(self.__cards_from_values(play_pile_values))
@@ -45,7 +47,9 @@ class BoardFactory:
                                         burn_pile=burn_pile,
                                         who_starts=who_starts,
                                         cards_are_flipped=cards_are_flipped,
-                                        effect_multiplier=start_effect_multiplier)
+                                        effect_multiplier=start_effect_multiplier,
+                                        turn_order=turn_order,
+                                        play_order=play_order)
 
     @staticmethod
     def __cards_from_values(values: list[int], default_suit: CardSuit=SUITS[0]) -> Cards:

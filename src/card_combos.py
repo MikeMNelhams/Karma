@@ -25,6 +25,9 @@ class CardCombo(ABC):
     def __len__(self) -> int:
         return len(self.cards)
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.cards})"
+
     @abstractmethod
     def __call__(self, board: IBoard) -> None:
         raise NotImplementedError
@@ -105,13 +108,16 @@ class Combo_10(CardCombo):
 
 class Combo_Jack(CardCombo):
     def __call__(self, board: IBoard) -> None:
-        if len(board.play_pile) <= len(self.cards):
+        if len(board.play_pile) < len(self.cards) * 2:
             return None
 
-        if board.play_pile.visible_top_card.value == CardValue.JACK:
+        non_jack_combo_cards = board.play_pile[-1 - len(self):-1]
+        print(f"Non Jack-Combo cards: {non_jack_combo_cards}")
+        if non_jack_combo_cards[-1].value == CardValue.JACK:
             return None
 
-        board.play_cards(Cards([board.play_pile[-1 - len(self)]]), self.controller, self.board_printer)
+        board.play_cards(non_jack_combo_cards, self.controller, self.board_printer,
+                         add_to_play_pile=False)
         return None
 
 
@@ -181,9 +187,13 @@ class Combo_Ace(CardCombo):
 class Combo_Joker(CardCombo):
     def __call__(self, board: IBoard) -> None:
         board.burn(joker_count=len(self))
-        player_index = self.controller.ask_user(["Who would you like to JOKER?"],
-                                                [rc.IsWithinRange(0, len(board.players))])
-        board.players[player_index].pickup(board.play_pile[0])
+        current_player_index = board.player_index
+        target_index = self.controller.ask_user(["Who would you like to JOKER?"],
+                                                [rc.IsNumberSelection(0, len(board.players)-1,
+                                                                      max_selection_count=1,
+                                                                      exclude=current_player_index)])
+        target_index = target_index[0][0]
+        board.players[target_index].pickup(board.play_pile)
         return None
 
 

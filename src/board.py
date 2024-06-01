@@ -14,12 +14,10 @@ from src.card_combos import CardComboFactory, Combo_3
 from src.board_interface import BoardPlayOrder, BoardTurnOrder, IBoard, IBoardPrinter
 from src.controller import Controller
 
-
 type OnEndTurnEvent = Callable[[Board], None]
 
 
 class Board(IBoard):
-
     INVALID_ACTIONS = {"draw_card", "receive_card", "rotate_hand"}
 
     __playable_card_comparisons = {BoardPlayOrder.UP: lambda x, y: x >= y, BoardPlayOrder.DOWN: lambda x, y: x <= y}
@@ -116,24 +114,36 @@ class Board(IBoard):
 
     def play_cards(self, cards: Cards,
                    controller: Controller | None = None,
-                   board_printer: IBoardPrinter | None = None) -> bool:
+                   board_printer: IBoardPrinter | None = None, add_to_play_pile: bool = True) -> bool:
         """ Assumes the cards are a legal combo AND can legally be played."""
-        self.play_pile.add_cards(cards)
+        if add_to_play_pile:
+            self.play_pile.add_cards(cards)
         self.__draw_until_full()
         self.card_combo_factory.set_counts(cards)
         combo = self.card_combo_factory.create_combo(cards, controller=controller, board_printer=board_printer)
         combo(self)
 
-        if combo.__class__.__name__ != Combo_3.__name__:
+        if not self.combo_history:
+            if combo.__class__.__name__ != Combo_3.__name__:
+                self.set_effect_multiplier(1)
+        elif self.combo_history[-1].__class__.__name__ != Combo_3.__name__:
             self.set_effect_multiplier(1)
 
-        self._combo_history.append(cards)
+        self._combo_history.append(combo)
         return True
 
     def burn(self, joker_count: int) -> None:
+        if not self.play_pile:
+            return None
+
         if joker_count > 0:
-            cards_to_burn = self.play_pile.pop_multiple(list(range(len(self.play_pile) - joker_count, len(self.play_pile))))
-            self.set_number_of_jokers_in_play(self.number_of_jokers_in_play - cards_to_burn.count_value(CardValue.JOKER))
+            if joker_count == 1:
+                indices_to_burn = [len(self.play_pile) - 1]
+            else:
+                indices_to_burn = self.play_pile.pop_multiple(list(range(len(self.play_pile) - joker_count, len(self.play_pile))))
+            cards_to_burn = self.play_pile.pop_multiple(indices_to_burn)
+            self.set_number_of_jokers_in_play(
+                self.number_of_jokers_in_play - cards_to_burn.count_value(CardValue.JOKER))
             self.burn_pile.add_cards(cards_to_burn)
             self._has_burned_this_turn = True
             return None
@@ -160,7 +170,8 @@ class Board(IBoard):
 
         top_card: Card = self.play_pile.visible_top_card
         comparison = self.__playable_card_comparisons[self.play_order]
-        valid_cards = Cards(card for card in cards if card.value in self.__always_legal_cards_values or comparison(card, top_card))
+        valid_cards = Cards(
+            card for card in cards if card.value in self.__always_legal_cards_values or comparison(card, top_card))
         if top_card.value == CardValue.ACE:
             return equal_subsequence_permutations_with_filler(valid_cards, CardValue.SIX, 3)
         return equal_subsequence_permutations_with_filler_and_filter(valid_cards, CardValue.SIX, self.__is_joker, 3)
@@ -263,8 +274,10 @@ class Board(IBoard):
         self.__current_legal_combos = self.legal_combos_from_cards(cards)
         return None
 
-    def __cards_possible_on_play_pile(self, test_cards: Cards, top_card: Card, comparison: Callable[[Card, Card], bool]) -> Cards:
-        return Cards(card for card in test_cards if self.__is_always_valid(card) or comparison(card, top_card) or card.value == self.__filler_card)
+    def __cards_possible_on_play_pile(self, test_cards: Cards, top_card: Card,
+                                      comparison: Callable[[Card, Card], bool]) -> Cards:
+        return Cards(card for card in test_cards if
+                     self.__is_always_valid(card) or comparison(card, top_card) or card.value == self.__filler_card)
 
     def __is_always_valid(self, card: Card) -> bool:
         return card in self.__always_legal_cards_values
@@ -273,3 +286,10 @@ class Board(IBoard):
         joker_count_in_draw_pile = self.draw_pile.count_value(CardValue.JOKER)
         joker_count_in_players = sum(player.number_of_jokers for player in self.players)
         return joker_count_in_draw_pile + joker_count_in_players
+
+    def __will_burn_because_four_in_a_row(self) -> bool:
+        if len(self.play_pile) < 4:
+            return False
+
+        window = deque([card for card in self.play_pile[-4:]])
+        print(window)
