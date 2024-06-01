@@ -82,7 +82,9 @@ class PlayCardPile(CardPile):
             if value == CardValue.FOUR:
                 continue
             if value == CardValue.JACK:
-                if i != 0 and values[i-1] != CardValue.FOUR:
+                if i == 0:
+                    return cards[i]
+                if values[i-1] != CardValue.FOUR:
                     return cards[i]
                 continue
             return cards[i]
