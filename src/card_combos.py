@@ -125,7 +125,8 @@ class Combo_Jack(CardCombo):
 class Combo_Queen(CardCombo):
     def __call__(self, board: IBoard) -> None:
         current_player = board.current_player
-        if not current_player.has_cards:
+        print(f"Playing from: {current_player.playing_from}")
+        if current_player.playing_from == 1 and not current_player.karma_face_up:
             return None
         number_of_repeats = len(self) * board.effect_multiplier
         playing_index_at_start_of_combo = current_player.playing_from
