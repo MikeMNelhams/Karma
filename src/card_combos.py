@@ -93,7 +93,7 @@ class Combo_8(CardCombo):
 
 class Combo_9(CardCombo):
     def __call__(self, board: IBoard) -> None:
-        if board.play_pile.will_burn:
+        if board.play_pile.contains_min_length_run(4):
             return None
         number_of_repeats = len(self) * board.effect_multiplier
         board.step_player_index(number_of_repeats)
@@ -167,7 +167,7 @@ class Combo_Queen(CardCombo):
 class Combo_King(CardCombo):
     def __call__(self, board: IBoard) -> None:
         number_of_repeats = len(self) * board.effect_multiplier
-        if board.play_pile.will_burn:
+        if board.play_pile.contains_min_length_run(4):
             board.burn(joker_count=0)
 
         number_of_repeats = min(number_of_repeats, len(board.burn_pile))
