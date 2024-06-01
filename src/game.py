@@ -147,13 +147,10 @@ class Game:
         if number_of_potential_winners == 1 and board.number_of_jokers_in_play == 0:
             raise GameWonException(self.game_ranks)
 
-        if number_of_potential_winners == 2 and board.number_of_jokers_in_play == 0:
+        if number_of_potential_winners >= 2 and board.number_of_jokers_in_play == 0:
             raise GameWonException(self.game_ranks)
-        if number_of_potential_winners == 2:
+        if number_of_potential_winners >= 2:
             self.__vote_for_winners(board)
-            raise GameWonException(self.game_ranks)
-
-        if number_of_potential_winners == len(board.players) - self.__number_of_jokers:
             raise GameWonException(self.game_ranks)
 
         if board.turns_played >= self.turn_limit:

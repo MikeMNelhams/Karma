@@ -116,7 +116,7 @@ class Cards(list[Card]):
         while i >= 0:
             target_card = target_cards[i]
             j = len(self) - 1
-            while j >= 0:
+            while j >= 0 and target_cards:
                 card_checking = self[j]
                 if target_card == card_checking:
                     target_cards.pop(i)

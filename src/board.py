@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, Deque, Callable
 
-from collections import deque
+from collections import deque, defaultdict
 
 from src.utils.multiset import FrozenMultiset
 from src.card_combo_permuations import (equal_subsequence_permutations_with_filler,
@@ -114,10 +114,14 @@ class Board(IBoard):
 
     def play_cards(self, cards: Cards,
                    controller: Controller | None = None,
-                   board_printer: IBoardPrinter | None = None, add_to_play_pile: bool = True) -> bool:
+                   board_printer: IBoardPrinter | None = None,
+                   add_to_play_pile: bool = True) -> bool:
         """ Assumes the cards are a legal combo AND can legally be played."""
         if add_to_play_pile:
             self.play_pile.add_cards(cards)
+
+        will_burn_due_to_four_in_a_row = self.__contains_four_in_a_row(self.play_pile)
+
         self.__draw_until_full()
         self.card_combo_factory.set_counts(cards)
         combo = self.card_combo_factory.create_combo(cards, controller=controller, board_printer=board_printer)
@@ -130,6 +134,9 @@ class Board(IBoard):
             self.set_effect_multiplier(1)
 
         self._combo_history.append(combo)
+
+        if will_burn_due_to_four_in_a_row:
+            self.burn(joker_count=self.play_pile.count_value(CardValue.JOKER))
         return True
 
     def burn(self, joker_count: int) -> None:
@@ -287,9 +294,24 @@ class Board(IBoard):
         joker_count_in_players = sum(player.number_of_jokers for player in self.players)
         return joker_count_in_draw_pile + joker_count_in_players
 
-    def __will_burn_because_four_in_a_row(self) -> bool:
-        if len(self.play_pile) < 4:
+    @staticmethod
+    def __contains_four_in_a_row(cards: Cards) -> bool:
+        if len(cards) < 4:
             return False
 
-        window = deque([card for card in self.play_pile[-4:]])
-        print(window)
+        window = deque([card.value for card in cards[-4:]])
+        window_count = defaultdict(int)
+        for x in window:
+            window_count[x] += 1
+
+        if window_count[window[0]] == 4:
+            return True
+
+        for i in range(len(cards) - 4):
+            window_count[window[3]] -= 1
+            window.rotate(1)
+            window[0] = cards[i].value
+            window_count[window[0]] -= 1
+            if window_count[window[0]] == 4:
+                return True
+        return False

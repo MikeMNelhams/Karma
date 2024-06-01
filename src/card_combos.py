@@ -116,8 +116,9 @@ class Combo_Jack(CardCombo):
         if non_jack_combo_cards[-1].value == CardValue.JACK:
             return None
 
-        board.play_cards(non_jack_combo_cards, self.controller, self.board_printer,
-                         add_to_play_pile=False)
+        for _ in range(len(self) * board.effect_multiplier):
+            board.play_cards(non_jack_combo_cards, self.controller, self.board_printer,
+                             add_to_play_pile=False)
         return None
 
 
