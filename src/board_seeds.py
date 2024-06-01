@@ -28,7 +28,7 @@ class BoardFactory:
 
     def matrix_start(self, players_card_values: list[list[list[int]]], draw_pile_values: list[int],
                      play_pile_values: list[int] | None = None, burn_pile_values: list[int] | None = None,
-                     who_starts: int=0, cards_are_flipped: bool = False):
+                     who_starts: int=0, cards_are_flipped: bool = False, start_effect_multiplier: int = 1):
         play_pile = PlayCardPile.empty()
         if play_pile_values is not None:
             play_pile = PlayCardPile(self.__cards_from_values(play_pile_values))
@@ -44,7 +44,8 @@ class BoardFactory:
                                         play_pile=play_pile,
                                         burn_pile=burn_pile,
                                         who_starts=who_starts,
-                                        cards_are_flipped=cards_are_flipped)
+                                        cards_are_flipped=cards_are_flipped,
+                                        effect_multiplier=start_effect_multiplier)
 
     @staticmethod
     def __cards_from_values(values: list[int], default_suit: CardSuit=SUITS[0]) -> Cards:
