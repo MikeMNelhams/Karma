@@ -111,13 +111,15 @@ class Combo_Jack(CardCombo):
         if len(board.play_pile) < len(self.cards) * 2:
             return None
 
-        non_jack_combo_cards = board.play_pile[-1 - len(self):-1]
-        print(f"Non Jack-Combo cards: {non_jack_combo_cards}")
-        if non_jack_combo_cards[-1].value == CardValue.JACK:
+        card_below_combo = board.play_pile[-1 - len(self)]
+        if card_below_combo.value == CardValue.JACK:
             return None
 
-        for _ in range(len(self) * board.effect_multiplier):
-            board.play_cards(non_jack_combo_cards, self.controller, self.board_printer,
+        number_of_repeats = len(self) * board.effect_multiplier
+        if card_below_combo.value == CardValue.THREE:
+            number_of_repeats = len(self)  # Otherwise it would go 2 -> 8, which would errr, not be good
+        for _ in range(number_of_repeats):
+            board.play_cards(Cards([card_below_combo]), self.controller, self.board_printer,
                              add_to_play_pile=False)
         return None
 
@@ -233,8 +235,8 @@ class CardComboFactory:
         if len(self.__counts) == 2:
             major_value = non_six_value(self.__counts)
             return self.combo_maps[major_value](cards, self.__counts, controller=controller, board_printer=board_printer)
-
-        raise TypeError("Too many different type cards!")
+        print(self.__counts)
+        raise TypeError(f"Too many different type cards!")
 
     @staticmethod
     def __calculate_counts(cards: Cards) -> dict[CardValue, int]:

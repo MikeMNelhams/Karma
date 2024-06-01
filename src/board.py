@@ -12,7 +12,7 @@ from src.card_combo_permuations import (equal_subsequence_permutations_filler,
 from src.cards import Cards, Card, CardValue
 from src.player import Player
 from src.card_pile import CardPile, PlayCardPile
-from src.card_combos import CardComboFactory, Combo_3
+from src.card_combos import CardComboFactory, CardCombo, Combo_3, Combo_4, Combo_Jack
 from src.board_interface import BoardPlayOrder, BoardTurnOrder, IBoard, IBoardPrinter
 from src.controller import Controller
 
@@ -119,22 +119,18 @@ class Board(IBoard):
                    board_printer: IBoardPrinter | None = None,
                    add_to_play_pile: bool = True) -> bool:
         """ Assumes the cards are a legal combo AND can legally be played."""
+        self.card_combo_factory.set_counts(cards)
+        combo = self.card_combo_factory.create_combo(cards, controller=controller, board_printer=board_printer)
+        combo_visibility = self.__combo_visibility(combo)
         if add_to_play_pile:
-            self.play_pile.add_cards(cards)
+            self.play_pile.add_cards(cards, are_visibles=combo_visibility)
 
         will_burn_due_to_four_in_a_row = self.__contains_four_in_a_row(self.play_pile)
 
         self.__draw_until_full()
-        self.card_combo_factory.set_counts(cards)
-        combo = self.card_combo_factory.create_combo(cards, controller=controller, board_printer=board_printer)
         combo(self)
 
-        if not self.combo_history:
-            if combo.__class__.__name__ != Combo_3.__name__:
-                self.set_effect_multiplier(1)
-        elif self.combo_history[-1].__class__.__name__ != Combo_3.__name__:
-            self.set_effect_multiplier(1)
-
+        self.__reset_effect_multiplier_if_necessary(combo)
         self._combo_history.append(combo)
 
         if will_burn_due_to_four_in_a_row:
@@ -142,6 +138,7 @@ class Board(IBoard):
         return True
 
     def burn(self, joker_count: int) -> None:
+        self.set_effect_multiplier(1)
         if not self.play_pile:
             return None
 
@@ -336,3 +333,28 @@ class Board(IBoard):
         comparison = self.__playable_card_comparisons[self.play_order]
         filler_is_unplayable = not comparison(self.__filler_card_value.value, top_card.value.value)
         return contains_filler and filler_is_unplayable
+
+    def __combo_visibility(self, combo: CardCombo) -> list[int]:
+        if combo.__class__.__name__ == Combo_4.__name__:
+            combo_visibility = [0 for _ in range(len(combo))]
+        elif combo.__class__.__name__ == Combo_Jack.__name__:
+            visibility = 1
+            if self.play_pile and self.play_pile[-1].value == CardValue.FOUR:
+                visibility = 0
+            combo_visibility = [visibility for _ in range(len(combo))]
+        else:
+            combo_visibility = [1 for _ in range(len(combo))]
+        return combo_visibility
+
+    def __reset_effect_multiplier_if_necessary(self, combo) -> None:
+        combo_name = combo.__class__.__name__
+        if combo_name == Combo_3.__name__:
+            return None
+        if combo_name == Combo_Jack.__name__:
+            if not self.combo_history:
+                self.set_effect_multiplier(1)
+            elif self.combo_history[-1].__class__.__name__ != Combo_3.__name__:
+                self.set_effect_multiplier(1)
+            return None
+        self.set_effect_multiplier(1)
+        return None
