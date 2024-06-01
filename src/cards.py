@@ -110,13 +110,18 @@ class Cards(list[Card]):
     def remove(self, cards: Cards) -> Cards:
         target_cards = cards.copy()
         removed_cards = Cards()
-        for i in range(len(target_cards) - 1, -1, -1):
+        i = len(target_cards) - 1
+        while i >= 0:
             target_card = target_cards[i]
-            for j in range(len(self) - 1, -1, -1):
+            j = len(self) - 1
+            while j >= 0:
                 card_checking = self[j]
                 if target_card == card_checking:
                     target_cards.pop(i)
                     removed_cards.add_card(self.pop(j))
+                    i -= 1
+                j -= 1
+            i -= 1
         return removed_cards
 
     def get(self, indices: list[int]) -> Cards:
@@ -165,6 +170,12 @@ class CardValue(Enum):
 
     def __repr__(self) -> str:
         return f"{self.name}"
+
+    def __hash__(self):
+        return hash(self.value)
+
+    def __eq__(self, other: CardValue) -> bool:
+        return self.value == other.value
 
 
 CARD_VALUE_NAMES = ({x: str(x) for x in range(2, 10)} |

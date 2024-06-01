@@ -44,7 +44,8 @@ def equal_subsequence_permutations_with_filler(seq: Cards,
             continue
         for i in range(1, filler_count+1):
             outputs_that_include_filler.add(FrozenMultiset(list(output) + [filler for _ in range(i)]))
-
+    outputs |= outputs_that_include_filler
+    outputs -= {FrozenMultiset([filler for _ in range(filler_count + i)]) for i in range(1, filler_count+1)}
     return outputs | outputs_that_include_filler
 
 
@@ -77,5 +78,6 @@ def equal_subsequence_permutations_with_filler_and_filter(seq: Cards,
             continue
         for i in range(1, filler_count+1):
             outputs_that_include_filler.add(FrozenMultiset(list(output) + [filler for _ in range(i)]))
-
-    return outputs | outputs_that_include_filler
+    outputs |= outputs_that_include_filler
+    outputs -= {FrozenMultiset([filler for _ in range(filler_count + i)]) for i in range(1, filler_count+1)}
+    return outputs

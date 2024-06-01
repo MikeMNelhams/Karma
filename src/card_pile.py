@@ -21,33 +21,29 @@ class CardPile(Cards):
 
 
 class PlayCardPile(CardPile):
-    __invisible_cards = {CardValue.FOUR, CardValue.JACK}
+    __invisible_cards = {CardValue.FOUR}
 
     def __init__(self, cards: Cards):
         super().__init__(cards)
-        self.__first_non_four = None
+        self.__first_visible_currently = self.__first_visible(cards)
 
     @property
     def visible_top_card(self) -> None | Card:
-        return self.__first_non_four
+        return self.__first_visible_currently
 
     def add_card(self, card: Card) -> None:
         super().add_card(card)
-        if card.value != CardValue.FOUR:
-            self.__first_non_four = card
+        self.__update_first_visible()
         return None
 
     def add_cards(self, cards: Cards) -> None:
         super().add_cards(cards)
-        card = cards[0]
-        if self.visible_top_card is None and card.value in self.__invisible_cards:
-            return None
-        self.__first_non_four = card
+        self.__update_first_visible()
         return None
 
     def clear(self) -> None:
         super().clear()
-        self.__first_non_four = None
+        self.__first_visible_currently = None
         return None
 
     @property
@@ -67,3 +63,27 @@ class PlayCardPile(CardPile):
             if total_run == 4:
                 return True
         return False
+
+    def __update_first_visible(self) -> None:
+        self.__first_visible_currently = self.__first_visible(self)
+        return None
+
+    @staticmethod
+    def __first_visible(cards: Cards) -> Card | None:
+        if len(cards) == 0:
+            return None
+        values = cards.values
+        if len(values) == 1:
+            if values[0] != CardValue.FOUR:
+                return cards[0]
+            return None
+        for i in range(len(values) - 1, -1, -1):
+            value = values[i]
+            if value == CardValue.FOUR:
+                continue
+            if value == CardValue.JACK:
+                if i != 0 and values[i-1] != CardValue.FOUR:
+                    return cards[i]
+                continue
+            return cards[i]
+        return None
