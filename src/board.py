@@ -7,7 +7,8 @@ from collections import deque, defaultdict
 from src.utils.multiset import FrozenMultiset
 from src.card_combo_permuations import (equal_subsequence_permutations_filler,
                                         equal_subsequence_permutations_filler_and_filter,
-                                        equal_subsequence_permutations_filler_and_filter_not_exclusively_filler)
+                                        equal_subsequence_permutations_filler_not_exclusively_filler,
+                                        equal_subsequence_permutations_filler_filter_not_exclusively_filler)
 from src.cards import Cards, Card, CardValue
 from src.player import Player
 from src.card_pile import CardPile, PlayCardPile
@@ -148,7 +149,8 @@ class Board(IBoard):
             if joker_count == 1:
                 indices_to_burn = [len(self.play_pile) - 1]
             else:
-                indices_to_burn = self.play_pile.pop_multiple(list(range(len(self.play_pile) - joker_count, len(self.play_pile))))
+                indices_to_burn = self.play_pile.pop_multiple(
+                    list(range(len(self.play_pile) - joker_count, len(self.play_pile))))
             cards_to_burn = self.play_pile.pop_multiple(indices_to_burn)
             self.set_number_of_jokers_in_play(
                 self.number_of_jokers_in_play - cards_to_burn.count_value(CardValue.JOKER))
@@ -179,9 +181,14 @@ class Board(IBoard):
         top_card: Card = self.play_pile.visible_top_card
         valid_cards = Cards(card for card in cards if self.__is_potentially_playable(card, top_card))
         if top_card.value == CardValue.ACE:
+            if self.__filler_card_value in cards.values and not self.__playable_card_comparisons[self.play_order](
+                    self.__filler_card_value.value, top_card.value.value):
+                return equal_subsequence_permutations_filler_not_exclusively_filler(valid_cards, CardValue.SIX, 3)
             return equal_subsequence_permutations_filler(valid_cards, CardValue.SIX, 3)
-        if self.__filler_card_value in cards.values and not self.__playable_card_comparisons[self.play_order](self.__filler_card_value.value, top_card.value.value):
-            return equal_subsequence_permutations_filler_and_filter_not_exclusively_filler(valid_cards, CardValue.SIX, self.__is_joker, 3)
+        if self.__filler_card_value in cards.values and not self.__playable_card_comparisons[self.play_order](
+                self.__filler_card_value.value, top_card.value.value):
+            return equal_subsequence_permutations_filler_filter_not_exclusively_filler(valid_cards, CardValue.SIX,
+                                                                                       self.__is_joker, 3)
         return equal_subsequence_permutations_filler_and_filter(valid_cards, CardValue.SIX, self.__is_joker, 3)
 
     def set_effect_multiplier(self, new_multiplier: int) -> None:
@@ -285,7 +292,8 @@ class Board(IBoard):
     def __cards_possible_on_play_pile(self, test_cards: Cards, top_card: Card,
                                       comparison: Callable[[Card, Card], bool]) -> Cards:
         return Cards(card for card in test_cards if
-                     self.__is_always_valid(card) or comparison(card, top_card) or card.value == self.__filler_card_value)
+                     self.__is_always_valid(card) or comparison(card,
+                                                                top_card) or card.value == self.__filler_card_value)
 
     def __is_always_valid(self, card: Card) -> bool:
         return card in self.__always_legal_cards_values
@@ -319,4 +327,5 @@ class Board(IBoard):
 
     def __is_potentially_playable(self, card: Card, top_card: Card) -> bool:
         comparison = self.__playable_card_comparisons[self.play_order]
-        return card.value in self.__always_legal_cards_values or comparison(card, top_card) or card.value == self.__filler_card_value
+        return card.value in self.__always_legal_cards_values or comparison(card,
+                                                                            top_card) or card.value == self.__filler_card_value
