@@ -31,14 +31,14 @@ class BoardFactory:
                      who_starts: int=0, cards_are_flipped: bool = False):
         play_pile = PlayCardPile.empty()
         if play_pile_values is not None:
-            play_pile = self.__cards_from_values(play_pile_values)
+            play_pile = PlayCardPile(self.__cards_from_values(play_pile_values))
 
         burn_pile = CardPile.empty()
         if burn_pile_values is not None:
-            burn_pile = self.__cards_from_values(burn_pile_values)
+            burn_pile = CardPile(self.__cards_from_values(burn_pile_values))
 
         players = [Player.from_card_values(card_values) for card_values in players_card_values]
-        draw_pile = self.__cards_from_values(draw_pile_values)
+        draw_pile = CardPile(self.__cards_from_values(draw_pile_values))
         return self.__board_constructor(players=players,
                                         draw_pile=draw_pile,
                                         play_pile=play_pile,
@@ -47,5 +47,5 @@ class BoardFactory:
                                         cards_are_flipped=cards_are_flipped)
 
     @staticmethod
-    def __cards_from_values(values: list[int], default_suit: CardSuit=SUITS[0]):
-        return CardPile(Cards([Card(default_suit, CardValue(x)) for x in values]))
+    def __cards_from_values(values: list[int], default_suit: CardSuit=SUITS[0]) -> Cards:
+        return Cards([Card(default_suit, CardValue(x)) for x in values])
