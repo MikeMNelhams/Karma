@@ -126,20 +126,27 @@ class Combo_Queen(CardCombo):
                 return None
             if current_player.playable_cards.is_exclusively(CardValue.JOKER):
                 return None
+            self.__give_away_card(board, current_player)
+        return None
 
-            card_index_selected = self.controller.ask_user(["What card index do you want to give away?"],
-                                                           [rc.IsNumberSelection(0,
-                                                                                 len(current_player.playable_cards),
-                                                                                 1)])
-            target_player_index = self.controller.ask_user(["Which player index do you want to give the card to?"],
-                                                           [rc.IsNumberSelection(0,
-                                                                                 len(board.players),
-                                                                                 1,
-                                                                                 exclude=board.player_index)])
-            target_player: Player = board.players[target_player_index[0][0]]
-            target_player.receive_card(current_player.playable_cards.pop(card_index_selected[0][0]))
-            if board.draw_pile and len(current_player.hand) < 3:
-                current_player.draw_card(board.draw_pile)
+    def __give_away_card(self, board, current_player):
+        joker_indices = {i for i, card in enumerate(current_player.playable_cards) if card.value == CardValue.JOKER}
+        card_index_selected = self.controller.ask_user(["What card index do you want to give away?"],
+                                                       [rc.IsNumberSelection(0,
+                                                                             len(current_player.playable_cards) - 1,
+                                                                             1,
+                                                                             exclude=joker_indices)])
+        players_with_no_cards = {i for i, player in enumerate(board.players) if not player.has_cards}
+        excluded_target_players = players_with_no_cards | {board.player_index}
+        target_player_index = self.controller.ask_user(["Which player index do you want to give the card to?"],
+                                                       [rc.IsNumberSelection(0,
+                                                                             len(board.players) - 1,
+                                                                             1,
+                                                                             exclude=excluded_target_players)])
+        target_player: Player = board.players[target_player_index[0][0]]
+        target_player.receive_card(current_player.playable_cards.pop(card_index_selected[0][0]))
+        if board.draw_pile and len(current_player.hand) < 3:
+            current_player.draw_card(board.draw_pile)
         return None
 
 
