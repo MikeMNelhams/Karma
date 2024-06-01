@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, Deque, Callable
 
-from collections import deque, defaultdict
+from collections import deque
 
 from src.utils.multiset import FrozenMultiset
 from src.card_combo_permuations import (equal_subsequence_permutations_filler,

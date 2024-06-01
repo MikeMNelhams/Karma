@@ -175,3 +175,7 @@ class IBoardPrinter(ABC):
     @abstractmethod
     def print(self, select_index: int=None) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    def print_legal_moves(self) -> None:
+        raise NotImplementedError

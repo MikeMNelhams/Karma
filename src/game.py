@@ -83,8 +83,7 @@ class Game:
         self.board.start_turn()
 
         actions = self.__possible_actions.copy()
-        print(f"Legal moves from {self.board.current_player.playable_cards}:")
-        print(self.board.current_legal_combos)
+        self.boardPrinter.print_legal_moves()
         for action_name in self.__possible_actions:
             if not actions[action_name].is_valid(self.board):
                 actions.pop(action_name)

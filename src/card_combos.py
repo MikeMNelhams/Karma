@@ -77,7 +77,7 @@ class Combo_6(CardCombo):
 
 class Combo_7(CardCombo):
     def __call__(self, board: IBoard) -> None:
-        if board.effect_multiplier > 1:
+        if board.effect_multiplier & 1 == 0:
             return None
         board.flip_play_order()
         return None
@@ -85,7 +85,7 @@ class Combo_7(CardCombo):
 
 class Combo_8(CardCombo):
     def __call__(self, board: IBoard) -> None:
-        if board.effect_multiplier > 1:
+        if board.effect_multiplier & 1 == 0:
             return None
         board.flip_turn_order()
         return None
@@ -127,7 +127,6 @@ class Combo_Jack(CardCombo):
 class Combo_Queen(CardCombo):
     def __call__(self, board: IBoard) -> None:
         current_player = board.current_player
-        print(f"Playing from: {current_player.playing_from}")
         if current_player.playing_from == 1 and not current_player.karma_face_up:
             return None
         number_of_repeats = len(self) * board.effect_multiplier

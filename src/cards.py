@@ -203,10 +203,3 @@ def non_six_value_from_cards(cards: Cards) -> CardValue:
         if card.value != CardValue.SIX:
             return card.value
     raise TypeError(f"All cards are six or the cards are empty: {cards}")
-
-
-if __name__ == "__main__":
-    three1 = Card(SUITS[0], CardValue.THREE)
-    three2 = Card(SUITS[1], CardValue.THREE)
-    x = {three1, three2}
-    print(x)

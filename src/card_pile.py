@@ -1,4 +1,4 @@
-from typing import Self, Iterable
+from typing import Iterable, Self
 
 from cards import Card, Cards, CardValue
 
