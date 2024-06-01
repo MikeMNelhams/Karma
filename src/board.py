@@ -175,21 +175,22 @@ class Board(IBoard):
         if self.cards_are_flipped:
             return set(FrozenMultiset([card.value]) for card in cards)
 
+        filler = self.__filler_card_value
+
         if not self.play_pile or self.play_pile.visible_top_card is None:
-            return equal_subsequence_permutations_filler_and_filter(cards, CardValue.SIX, self.__is_joker, 3)
+            return equal_subsequence_permutations_filler_and_filter(cards, filler, self.__is_joker, 3)
 
         top_card: Card = self.play_pile.visible_top_card
         valid_cards = Cards(card for card in cards if self.__is_potentially_playable(card, top_card))
+
         if top_card.value == CardValue.ACE:
-            if self.__filler_card_value in cards.values and not self.__playable_card_comparisons[self.play_order](
-                    self.__filler_card_value.value, top_card.value.value):
-                return equal_subsequence_permutations_filler_not_exclusively_filler(valid_cards, CardValue.SIX, 3)
-            return equal_subsequence_permutations_filler(valid_cards, CardValue.SIX, 3)
-        if self.__filler_card_value in cards.values and not self.__playable_card_comparisons[self.play_order](
-                self.__filler_card_value.value, top_card.value.value):
-            return equal_subsequence_permutations_filler_filter_not_exclusively_filler(valid_cards, CardValue.SIX,
+            if self.__contains_unplayable_filler(cards, top_card):
+                return equal_subsequence_permutations_filler_not_exclusively_filler(valid_cards, filler, 3)
+            return equal_subsequence_permutations_filler(valid_cards, filler, 3)
+        if self.__contains_unplayable_filler(cards, top_card):
+            return equal_subsequence_permutations_filler_filter_not_exclusively_filler(valid_cards, filler,
                                                                                        self.__is_joker, 3)
-        return equal_subsequence_permutations_filler_and_filter(valid_cards, CardValue.SIX, self.__is_joker, 3)
+        return equal_subsequence_permutations_filler_and_filter(valid_cards, filler, self.__is_joker, 3)
 
     def set_effect_multiplier(self, new_multiplier: int) -> None:
         self._effect_multiplier = new_multiplier
@@ -329,3 +330,9 @@ class Board(IBoard):
         comparison = self.__playable_card_comparisons[self.play_order]
         return card.value in self.__always_legal_cards_values or comparison(card,
                                                                             top_card) or card.value == self.__filler_card_value
+
+    def __contains_unplayable_filler(self, cards: Cards, top_card: Card) -> bool:
+        contains_filler = self.__filler_card_value in cards.values
+        comparison = self.__playable_card_comparisons[self.play_order]
+        filler_is_unplayable = not comparison(self.__filler_card_value.value, top_card.value.value)
+        return contains_filler and filler_is_unplayable
