@@ -20,9 +20,9 @@ def equal_subsequence_permutations(seq: Cards) -> set[FrozenMultiset]:
     return outputs
 
 
-def equal_subsequence_permutations_with_filler(seq: Cards,
-                                               filler: CardValue,
-                                               minimum_to_filler: int=2) -> set[FrozenMultiset]:
+def equal_subsequence_permutations_filler(seq: Cards,
+                                          filler: CardValue,
+                                          minimum_to_filler: int = 2) -> set[FrozenMultiset]:
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
@@ -42,17 +42,17 @@ def equal_subsequence_permutations_with_filler(seq: Cards,
     for output in outputs:
         if len(output) < minimum_to_filler:
             continue
-        for i in range(1, filler_count+1):
+        for i in range(1, filler_count + 1):
             outputs_that_include_filler.add(FrozenMultiset(list(output) + [filler for _ in range(i)]))
     outputs |= outputs_that_include_filler
-    outputs -= {FrozenMultiset([filler for _ in range(filler_count + i)]) for i in range(1, filler_count+1)}
+    outputs -= {FrozenMultiset([filler for _ in range(filler_count + i)]) for i in range(1, filler_count + 1)}
     return outputs | outputs_that_include_filler
 
 
-def equal_subsequence_permutations_with_filler_and_filter(seq: Cards,
-                                                          filler: CardValue,
-                                                          _filter: callable,
-                                                          minimum_to_filler: int=2) -> set[FrozenMultiset]:
+def equal_subsequence_permutations_filler_and_filter(seq: Cards,
+                                                     filler: CardValue,
+                                                     _filter: callable,
+                                                     minimum_to_filler: int = 2) -> set[FrozenMultiset]:
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
@@ -76,8 +76,42 @@ def equal_subsequence_permutations_with_filler_and_filter(seq: Cards,
     for output in outputs:
         if len(output) < minimum_to_filler:
             continue
-        for i in range(1, filler_count+1):
+        for i in range(1, filler_count + 1):
             outputs_that_include_filler.add(FrozenMultiset(list(output) + [filler for _ in range(i)]))
     outputs |= outputs_that_include_filler
-    outputs -= {FrozenMultiset([filler for _ in range(filler_count + i)]) for i in range(1, filler_count+1)}
+    outputs -= {FrozenMultiset([filler for _ in range(filler_count + i)]) for i in range(1, filler_count + 1)}
+    return outputs
+
+
+def equal_subsequence_permutations_filler_and_filter_not_exclusively_filler(seq: Cards,
+                                                                            filler: CardValue,
+                                                                            _filter: callable,
+                                                                            minimum_to_filler: int = 2) -> set[FrozenMultiset]:
+    if len(seq) == 0:
+        return set()
+    if len(seq) == 1:
+        if _filter(seq[0]):
+            return set()
+        return {FrozenMultiset([seq[0].value])}
+
+    count = defaultdict(int)
+    outputs = set()
+    for card in seq:
+        key = card.value
+        count[key] += 1
+        if _filter(card):
+            continue
+        outputs.add(FrozenMultiset([key for _ in range(count[key])]))
+
+    filler_count = count[filler]
+    if filler_count == 0:
+        return outputs
+    outputs_that_include_filler = set()
+    for output in outputs:
+        if len(output) < minimum_to_filler:
+            continue
+        for i in range(1, filler_count + 1):
+            outputs_that_include_filler.add(FrozenMultiset(list(output) + [filler for _ in range(i)]))
+    outputs |= outputs_that_include_filler
+    outputs -= {FrozenMultiset([filler for _ in range(i)]) for i in range(1, filler_count * 2 + 1)}
     return outputs

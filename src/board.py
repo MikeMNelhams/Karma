@@ -5,8 +5,9 @@ from typing import Iterable, Deque, Callable
 from collections import deque, defaultdict
 
 from src.utils.multiset import FrozenMultiset
-from src.card_combo_permuations import (equal_subsequence_permutations_with_filler,
-                                        equal_subsequence_permutations_with_filler_and_filter)
+from src.card_combo_permuations import (equal_subsequence_permutations_filler,
+                                        equal_subsequence_permutations_filler_and_filter,
+                                        equal_subsequence_permutations_filler_and_filter_not_exclusively_filler)
 from src.cards import Cards, Card, CardValue
 from src.player import Player
 from src.card_pile import CardPile, PlayCardPile
@@ -22,7 +23,7 @@ class Board(IBoard):
 
     __playable_card_comparisons = {BoardPlayOrder.UP: lambda x, y: x >= y, BoardPlayOrder.DOWN: lambda x, y: x <= y}
     __always_legal_cards_values = {CardValue.FOUR, CardValue.TWO}
-    __filler_card = CardValue.SIX
+    __filler_card_value = CardValue.SIX
 
     def __init__(self, players: Iterable[Player], draw_pile: CardPile | None = None,
                  burn_pile: CardPile | None = None, play_pile: PlayCardPile | None = None,
@@ -173,15 +174,15 @@ class Board(IBoard):
             return set(FrozenMultiset([card.value]) for card in cards)
 
         if not self.play_pile or self.play_pile.visible_top_card is None:
-            return equal_subsequence_permutations_with_filler_and_filter(cards, CardValue.SIX, self.__is_joker, 3)
+            return equal_subsequence_permutations_filler_and_filter(cards, CardValue.SIX, self.__is_joker, 3)
 
         top_card: Card = self.play_pile.visible_top_card
-        comparison = self.__playable_card_comparisons[self.play_order]
-        valid_cards = Cards(
-            card for card in cards if card.value in self.__always_legal_cards_values or comparison(card, top_card))
+        valid_cards = Cards(card for card in cards if self.__is_potentially_playable(card, top_card))
         if top_card.value == CardValue.ACE:
-            return equal_subsequence_permutations_with_filler(valid_cards, CardValue.SIX, 3)
-        return equal_subsequence_permutations_with_filler_and_filter(valid_cards, CardValue.SIX, self.__is_joker, 3)
+            return equal_subsequence_permutations_filler(valid_cards, CardValue.SIX, 3)
+        if self.__filler_card_value in cards.values and not self.__playable_card_comparisons[self.play_order](self.__filler_card_value.value, top_card.value.value):
+            return equal_subsequence_permutations_filler_and_filter_not_exclusively_filler(valid_cards, CardValue.SIX, self.__is_joker, 3)
+        return equal_subsequence_permutations_filler_and_filter(valid_cards, CardValue.SIX, self.__is_joker, 3)
 
     def set_effect_multiplier(self, new_multiplier: int) -> None:
         self._effect_multiplier = new_multiplier
@@ -284,7 +285,7 @@ class Board(IBoard):
     def __cards_possible_on_play_pile(self, test_cards: Cards, top_card: Card,
                                       comparison: Callable[[Card, Card], bool]) -> Cards:
         return Cards(card for card in test_cards if
-                     self.__is_always_valid(card) or comparison(card, top_card) or card.value == self.__filler_card)
+                     self.__is_always_valid(card) or comparison(card, top_card) or card.value == self.__filler_card_value)
 
     def __is_always_valid(self, card: Card) -> bool:
         return card in self.__always_legal_cards_values
@@ -315,3 +316,7 @@ class Board(IBoard):
             if window_count[window[0]] == 4:
                 return True
         return False
+
+    def __is_potentially_playable(self, card: Card, top_card: Card) -> bool:
+        comparison = self.__playable_card_comparisons[self.play_order]
+        return card.value in self.__always_legal_cards_values or comparison(card, top_card) or card.value == self.__filler_card_value
