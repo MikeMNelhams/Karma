@@ -48,9 +48,11 @@ CARD = TypeVar("CARD", bound=Card)
 
 
 class Cards(list[Card]):
-    def __init__(self, cards: Iterable[Card] = None):
+    def __init__(self, cards: Iterable[Card] | None = None):
         if cards is None:
             super().__init__([])
+        elif isinstance(cards, Card):
+            super().__init__([cards])
         else:
             super().__init__(cards)
 
