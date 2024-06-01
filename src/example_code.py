@@ -10,12 +10,12 @@ def main():
     p2 = [[], [], []]
     p3 = [[], [], []]
     player_matrix = [p0, p1, p2, p3]
-    start_board = BoardFactory(Board).matrix_start(player_matrix, [2, 3, 5, 7])
+    start_board = BoardFactory(Board).matrix_start(player_matrix, [2, 3, 5, 7], who_starts=2)
 
     # start_board = BoardFactory(Board).random_start(number_of_players=4)
     game = Game(start_board, board_printer=BoardPrinterDebug)
-    game.mulligan_all()
-    game.choose_start_direction()
+    # game.mulligan_all()
+    # game.choose_start_direction()
     game.play()
 
 
