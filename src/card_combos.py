@@ -124,8 +124,10 @@ class Combo_Jack(CardCombo):
 
 class Combo_Queen(CardCombo):
     def __call__(self, board: IBoard) -> None:
-        number_of_repeats = len(self) * board.effect_multiplier
         current_player = board.current_player
+        if not current_player.has_cards:
+            return None
+        number_of_repeats = len(self) * board.effect_multiplier
         playing_index_at_start_of_combo = current_player.playing_from
         for _ in range(number_of_repeats):
             self.board_printer.print(board.player_index)
@@ -134,6 +136,8 @@ class Combo_Queen(CardCombo):
             if current_player.playable_cards.is_exclusively(CardValue.JOKER):
                 return None
             self.__give_away_card(board, current_player)
+            if not current_player.has_cards:
+                return None
         return None
 
     def __give_away_card(self, board, current_player):
