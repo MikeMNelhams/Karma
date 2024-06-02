@@ -20,7 +20,7 @@ class BoardPrinter(IBoardPrinter):
         print("\n".join(_repr_players(board, select_index)) + game_state_str)
         return None
 
-    def print_legal_moves(self) -> None:
+    def print_choosable_cards(self) -> None:
         print(f"Legal moves from {self.board.current_player.playable_cards}:")
         print(self.board.current_legal_combos)
         return None
@@ -47,7 +47,7 @@ class BoardPrinterDebug(IBoardPrinter):
         print("\n".join(_repr_players(board, select_index, debug=True)) + f"\nCombo Timeline: {board.combo_history}\n" + game_state_str)
         return None
 
-    def print_legal_moves(self) -> None:
+    def print_choosable_cards(self) -> None:
         print(f"Legal moves from {self.board.current_player.playable_cards}:")
         print(self.board.current_legal_combos)
         return None

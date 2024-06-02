@@ -13,8 +13,9 @@ from src.cards import Cards, Card, CardValue
 from src.player import Player
 from src.card_pile import CardPile, PlayCardPile
 from src.card_combos import CardComboFactory, CardCombo, Combo_3, Combo_4, Combo_Jack
-from src.board_interface import BoardPlayOrder, BoardTurnOrder, IBoard, IBoardPrinter
-from src.controllers import PlayerController
+from src.board_interface import BoardPlayOrder, BoardTurnOrder, IBoard, IBoardPrinter, IAction
+from src.board_actions import PickUpPlayPile, PlayCardsCombo
+from src.controller_interface import IController
 
 type OnEndTurnEvent = Callable[[Board], None]
 
@@ -49,15 +50,17 @@ class Board(IBoard):
         self._has_burned_this_turn = has_burned_this_turn
         self._turns_played = turns_played
 
+        self.player_index_who_started_turn = who_starts
+
         self.__on_end_turn_events: list[OnEndTurnEvent] = []
         self.__card_combo_factory = CardComboFactory()
         self._has_burned_this_turn = False
 
         self.__current_legal_combos = set()
-        self.player_index_who_started_turn = who_starts
+        self.__current_legal_actions = set()
+        self.__all_actions = {PickUpPlayPile, PlayCardsCombo}
 
         self.__number_of_jokers_in_play = self.__count_in_play_jokers()
-
         self._combo_history = []
 
     def get_player(self, player_index: int) -> Player:
@@ -98,6 +101,7 @@ class Board(IBoard):
         self.player_index_who_started_turn = self.player_index
         self._has_burned_this_turn = False
         self.__calculate_legal_combos(self.current_player.playable_cards)
+        self.__calculate_current_legal_actions()
         return None
 
     def end_turn(self) -> None:
@@ -115,7 +119,7 @@ class Board(IBoard):
         return None
 
     def play_cards(self, cards: Cards,
-                   controller: PlayerController | None = None,
+                   controller: IController | None = None,
                    board_printer: IBoardPrinter | None = None,
                    add_to_play_pile: bool = True) -> bool:
         """ Assumes the cards are a legal combo AND can legally be played."""
@@ -158,12 +162,6 @@ class Board(IBoard):
         self.play_pile.clear()
         self._has_burned_this_turn = True
         return None
-
-    def is_legal_play(self, cards: Cards) -> bool:
-        self.__card_combo_factory.set_counts(cards)
-        if not self.__card_combo_factory.is_valid_combo():
-            return False
-        return cards.values in self.current_legal_combos
 
     def legal_combos_from_cards(self, cards: Cards) -> set:
         if not cards:
@@ -279,6 +277,18 @@ class Board(IBoard):
     def current_legal_combos(self) -> set:
         return self.__current_legal_combos
 
+    @property
+    def current_legal_actions(self) -> set[IAction]:
+        return self.__current_legal_actions
+
+    def __calculate_current_legal_actions(self) -> None:
+        actions = {action for action in self.__all_actions}
+        for action in self.__all_actions:
+            if not action.is_valid(self):
+                actions.remove(action)
+        self.__current_legal_actions = actions
+        return None
+
     @staticmethod
     def __is_joker(card: Card) -> bool:
         return card.value == CardValue.JOKER
@@ -303,8 +313,8 @@ class Board(IBoard):
 
     def __is_potentially_playable(self, card: Card, top_card: Card) -> bool:
         comparison = self.__playable_card_comparisons[self.play_order]
-        return card.value in self.__always_legal_cards_values or comparison(card,
-                                                                            top_card) or card.value == self.__filler_card_value
+        is_always_legal = card.value in self.__always_legal_cards_values
+        return is_always_legal or comparison(card, top_card) or card.value == self.__filler_card_value
 
     def __contains_unplayable_filler(self, cards: Cards, top_card: Card) -> bool:
         contains_filler = self.__filler_card_value in cards.values

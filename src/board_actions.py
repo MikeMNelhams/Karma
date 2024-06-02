@@ -13,7 +13,12 @@ type CardGetter = Callable[[], Cards]
 
 
 class PickUpPlayPile(IAction):
-    def is_valid(self, board: IBoard) -> bool:
+    @classmethod
+    def name(cls) -> str:
+        return "pickup"
+
+    @classmethod
+    def is_valid(cls, board: IBoard) -> bool:
         if not board.current_player.has_cards:
             return False
         return len(board.play_pile) > 0
@@ -29,6 +34,10 @@ class PickUpPlayPile(IAction):
 
 
 class PlayCardsCombo(IAction):
+    @classmethod
+    def name(cls) -> str:
+        return "play_cards"
+
     def __init__(self, cards_getter: CardGetter):
         self.__cards_getter = cards_getter
         self.__cards = None
@@ -43,7 +52,8 @@ class PlayCardsCombo(IAction):
         self.__cards = self.__cards_getter()
         return None
 
-    def is_valid(self, board: IBoard) -> bool:
+    @classmethod
+    def is_valid(cls, board: IBoard) -> bool:
         if not board.current_player.has_cards:
             return False
         return len(board.current_legal_combos) > 0

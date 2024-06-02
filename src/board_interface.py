@@ -6,7 +6,7 @@ from typing import Deque, Iterable
 
 from enum import Enum
 
-from src.cards import Card, Cards
+from src.cards import Cards
 from src.card_pile import CardPile, PlayCardPile
 from src.player import Player
 from src.controller_interface import IController
@@ -89,6 +89,11 @@ class IBoardState(metaclass=ABCMeta):
 
     @property
     @abstractmethod
+    def current_legal_actions(self) -> set[IAction]:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
     def number_of_jokers_in_play(self) -> int:
         raise NotImplementedError
 
@@ -138,10 +143,6 @@ class IBoard(IBoardState):
         raise NotImplementedError
 
     @abstractmethod
-    def is_legal_play(self, play_card: Card) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
     def reset_play_order(self) -> None:
         raise NotImplementedError
 
@@ -167,21 +168,45 @@ class IBoard(IBoardState):
         raise NotImplementedError
 
 
-class IAction(ABC):
+# HOW THIS WORKS: https://stackoverflow.com/questions/57349105/python-abc-inheritance-with-specified-metaclass
+class MetaIAction(type):
+    @classmethod
     @abstractmethod
-    def is_valid(self, board: IBoard) -> bool:
+    def name(cls) -> str:
+        raise NotImplementedError
+
+    def __repr__(self) -> str:
+        return self.name()
+
+
+class MetaIActionCombined(MetaIAction, ABCMeta):
+    @classmethod
+    @abstractmethod
+    def name(cls) -> str:
+        raise NotImplementedError
+
+
+class IAction(ABC, metaclass=MetaIActionCombined):
+    @classmethod
+    @abstractmethod
+    def is_valid(cls, board: IBoard) -> bool:
         raise NotImplementedError
 
     @abstractmethod
     def __call__(self, board: IBoard, **kwargs) -> None:
         raise NotImplementedError
 
+    def __hash__(self):
+        return hash(self.name())
+
     @abstractmethod
     def copy(self):
         raise NotImplementedError
 
-    def name(self):
-        return self.__class__.__name__
+    @classmethod
+    @abstractmethod
+    def name(cls) -> str:
+        raise NotImplementedError
 
 
 class IBoardPrinter(ABC):
@@ -194,5 +219,5 @@ class IBoardPrinter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def print_legal_moves(self) -> None:
+    def print_choosable_cards(self) -> None:
         raise NotImplementedError

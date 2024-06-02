@@ -1,8 +1,10 @@
+from typing import Callable
+
 from collections import defaultdict
 
 from src.cards import Cards
 from src.board import Board
-from src.board_interface import BoardTurnOrder, IBoard, IAction
+from src.board_interface import BoardTurnOrder, IBoard, IAction, MetaIAction
 from src.board_printer import BoardPrinter
 from src.board_seeds import BoardFactory
 from src.board_actions import PlayCardsCombo, PickUpPlayPile
@@ -41,9 +43,47 @@ class Game:
         self.board.register_on_end_turn_event(self.__play_turn_again_if_burned_this_turn)  # Get another go if burned
         self.board.register_on_end_turn_event(self.__check_if_winner)  # Raise an exception if game-end condition met
 
-        self.__possible_actions: dict[str, IAction] = {"pickup": PickUpPlayPile(),
-                                                            "play_cards": PlayCardsCombo(self.__card_selection_getter)}
+        # self.__possible_actions: dict[str, IAction] = {"pickup": PickUpPlayPile(),
+        #                                                     "play_cards": PlayCardsCombo(self.__card_selection_getter)}
         self.__number_of_jokers = self.board.number_of_jokers_in_play
+
+    def play(self) -> None:
+        for _ in range(self.turn_limit * len(self.board.players) + 1):
+            self.play_turn()
+        return None
+
+    def play_turn(self) -> None:
+        self.print(self.board.player_index)
+        self.board.start_turn()
+
+        self.boardPrinter.print_choosable_cards()  # Currently useful for debugging
+        actions = self.board.current_legal_actions
+
+        if not actions:
+            self.board.end_turn()
+            self.print()
+            return None
+
+        actions_map = {action.name(): action for action in actions}
+        action_names = [action.name() for action in actions]
+        if len(actions) == 1:
+            action_name = action_names[0]
+        else:
+            get_action_prompt = self.prompt_manager["select_action"]
+            get_action_prompt.set_text(get_action_prompt.text + f" ({"/".join(action_names)})")
+            action_name = self.controller.ask_user([get_action_prompt],
+                                                   [rc.IsInSet(set(action_names))])[0]
+
+        action_class: MetaIAction = actions_map[action_name]
+        if action_name == "pickup":
+            action: IAction = action_class()
+        elif action_name == "play_cards":
+            action: IAction = action_class(self.__card_selection_getter)
+        else:
+            raise ZeroDivisionError
+        action(self.board, controller=self.controller, board_printer=self.boardPrinter)
+        self.board.end_turn()
+        return None
 
     def mulligan_all(self) -> None:
         for i in range(len(self.board.players)):
@@ -76,42 +116,6 @@ class Game:
         if direction[0].lower() == "r":
             return self.board.set_turn_order(BoardTurnOrder.RIGHT)
         self.board.set_turn_order(BoardTurnOrder.LEFT)
-        return None
-
-    def play_turn(self) -> None:
-        self.print(self.board.player_index)
-
-        self.board.start_turn()
-
-        actions = self.__possible_actions.copy()
-        self.boardPrinter.print_legal_moves()
-        for action_name in self.__possible_actions:
-            if not actions[action_name].is_valid(self.board):
-                actions.pop(action_name)
-
-        if not actions:
-            self.board.end_turn()
-            self.print()
-            return None
-
-        action_names = [key for key in actions]
-
-        if len(action_names) == 1:
-            action_name = action_names[0]
-        else:
-            get_action_prompt = self.prompt_manager["select_action"]
-            get_action_prompt.set_text(get_action_prompt.text + f" ({"/".join(action_names)})")
-            action_name = self.controller.ask_user([get_action_prompt],
-                                                   [rc.IsInSet(set(action_names))])[0]
-
-        action: IAction = self.__possible_actions[action_name].copy()
-        action(self.board, controller=self.controller, board_printer=self.boardPrinter)
-        self.board.end_turn()
-        return None
-
-    def play(self) -> None:
-        for _ in range(self.turn_limit * len(self.board.players) + 1):
-            self.play_turn()
         return None
 
     @property
