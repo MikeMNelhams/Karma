@@ -185,6 +185,14 @@ class Combo_Ace(CardCombo):
         number_of_repeats = len(self) * board.effect_multiplier
         if number_of_repeats == 1:
             board.flip_hands()
+            if board.cards_are_flipped:
+                for player in board.players:
+                    if player.hand:
+                        player.hand.shuffle()
+            elif not board.cards_are_flipped:
+                for player in board.players:
+                    if player.hand:
+                        player.hand.sort()
             return None
         board.flip_hands()
         board.flip_hands()
