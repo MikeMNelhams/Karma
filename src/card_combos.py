@@ -125,7 +125,7 @@ class Combo_Jack(CardCombo):
         if card_below_combo.value == CardValue.THREE:
             number_of_repeats = len(self)  # Otherwise it would go 2 -> 8, which would errr, not be good
         for _ in range(number_of_repeats):
-            board.play_cards(Cards([card_below_combo]), self.controller, self.board_printer,
+            board.play_cards(Cards([card_below_combo]), controller=self.controller, board_printer=self.board_printer,
                              add_to_play_pile=False)
         return None
 
@@ -150,20 +150,20 @@ class Combo_Queen(CardCombo):
 
     def __give_away_card(self, board, current_player):
         joker_indices = {i for i, card in enumerate(current_player.playable_cards) if card.value == CardValue.JOKER}
-        card_index_selected = self.controller.ask_user([self.prompt_manager["giveaway"]],
-                                                       [rc.IsNumberSelection(0,
-                                                                             len(current_player.playable_cards) - 1,
-                                                                             1,
-                                                                             exclude=joker_indices)])
+        card_index_selected = self.controller.get_response([self.prompt_manager["give_away"]],
+                                                           [rc.IsNumberSelection(0,
+                                                                                 len(current_player.playable_cards) - 1,
+                                                                                 1,
+                                                                                 exclude=joker_indices)])
         players_with_no_cards = {i for i, player in enumerate(board.players) if not player.has_cards}
         excluded_target_players = players_with_no_cards | {board.player_index}
-        target_player_index = self.controller.ask_user([self.prompt_manager["give_away_select_player"]],
-                                                       [rc.IsNumberSelection(0,
-                                                                             len(board.players) - 1,
-                                                                             1,
-                                                                             exclude=excluded_target_players)])
-        target_player: Player = board.players[target_player_index[0][0]]
-        target_player.receive_card(current_player.playable_cards.pop(card_index_selected[0][0]))
+        target_player_index = self.controller.get_response([self.prompt_manager["give_away_select_player"]],
+                                                           [rc.IsNumberSelection(0,
+                                                                                 len(board.players) - 1,
+                                                                                 1,
+                                                                                 exclude=excluded_target_players)])
+        target_player: Player = board.players[target_player_index[0]]
+        target_player.receive_card(current_player.playable_cards.pop(card_index_selected[0]))
         if board.draw_pile and len(current_player.hand) < 3:
             current_player.draw_card(board.draw_pile)
         return None
@@ -182,7 +182,7 @@ class Combo_King(CardCombo):
         for card in cards_to_play:
             if card.value == CardValue.JOKER:
                 board.set_number_of_jokers_in_play(board.number_of_jokers_in_play - 1)
-            board.play_cards(Cards([card]))
+            board.play_cards(Cards([card]), controller=self.controller, board_printer=self.board_printer)
         return None
 
 
@@ -209,11 +209,11 @@ class Combo_Joker(CardCombo):
     def __call__(self, board: IBoard) -> None:
         board.burn(joker_count=len(self))
         current_player_index = board.player_index
-        target_index = self.controller.ask_user([self.prompt_manager["joker_select_player"]],
-                                                [rc.IsNumberSelection(0, len(board.players) - 1,
-                                                                      max_selection_count=1,
-                                                                      exclude=current_player_index)])
-        target_index = target_index[0][0]
+        target_index = self.controller.get_response([self.prompt_manager["joker_select_player"]],
+                                                    [rc.IsNumberSelection(0, len(board.players) - 1,
+                                                                          max_selection_count=1,
+                                                                          exclude=current_player_index)])
+        target_index = target_index[0]
         board.players[target_index].pickup(board.play_pile)
         return None
 

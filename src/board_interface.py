@@ -97,6 +97,16 @@ class IBoardState(metaclass=ABCMeta):
     def number_of_jokers_in_play(self) -> int:
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def total_jokers(self) -> int:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def potential_winner_indices(self) -> set[int]:
+        raise NotImplementedError
+
 
 class IBoard(IBoardState):
     @abstractmethod

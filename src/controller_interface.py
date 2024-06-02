@@ -12,5 +12,5 @@ class IController(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def ask_user(self, prompts: list[Prompt], output_checks: list[ResponseCondition]) -> list[Any]:
+    def get_response(self, prompts: list[Prompt], output_checks: list[ResponseCondition]) -> list[Any]:
         raise NotImplementedError

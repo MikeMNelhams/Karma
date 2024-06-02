@@ -63,8 +63,8 @@ class PlayCardsCombo(IAction):
 
         while self.cards is None or FrozenMultiset(self.cards.values) not in board.current_legal_combos:
             self.__get_cards()
+            print(f"Cards: {self.cards}")
         cards_to_play = player.playable_cards.remove(self.cards)
-        print(f"Selected VALID cards to play: {cards_to_play}")
         board.play_cards(cards_to_play, controller=controller, board_printer=board_printer)
         return None
 

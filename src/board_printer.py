@@ -59,6 +59,18 @@ class BoardPrinterDebug(IBoardPrinter):
                 f"#turns played: {board.turns_played}, burned this turn?: {board.has_burned_this_turn}")
 
 
+class BoardPrinterNone(IBoardPrinter):
+
+    def __init__(self, board: IBoard):
+        self.board = board
+
+    def print(self, select_index: int = None) -> None:
+        pass
+
+    def print_choosable_cards(self) -> None:
+        pass
+
+
 def _repr_players(board: IBoard, select_index: int=None, debug: bool=False) -> Iterable[str]:
     player_str = ""  # noqa
 

@@ -61,6 +61,7 @@ class Board(IBoard):
         self.__all_actions = {PickUpPlayPile, PlayCardsCombo}
 
         self.__number_of_jokers_in_play = self.__count_in_play_jokers()
+        self.__total_jokers = self.__count_total_jokers()
         self._combo_history = []
 
     def get_player(self, player_index: int) -> Player:
@@ -270,16 +271,24 @@ class Board(IBoard):
         return None
 
     @property
+    def total_jokers(self) -> int:
+        return self.__total_jokers
+
+    @property
     def combo_history(self) -> list[str]:
         return self._combo_history
 
     @property
     def current_legal_combos(self) -> set:
-        return self.__current_legal_combos
+        return {x.copy() for x in self.__current_legal_combos}
 
     @property
     def current_legal_actions(self) -> set[IAction]:
         return self.__current_legal_actions
+
+    @property
+    def potential_winner_indices(self) -> set[int]:
+        return {i for i, player in enumerate(self.players) if not player.has_cards}
 
     def __calculate_current_legal_actions(self) -> None:
         actions = {action for action in self.__all_actions}
@@ -310,6 +319,13 @@ class Board(IBoard):
         joker_count_in_draw_pile = self.draw_pile.count_value(CardValue.JOKER)
         joker_count_in_players = sum(player.number_of_jokers for player in self.players)
         return joker_count_in_draw_pile + joker_count_in_players
+
+    def __count_total_jokers(self) -> int:
+        j_draw_p = self.draw_pile.count_value(CardValue.JOKER)
+        j_play_p = self.play_pile.count_value(CardValue.JOKER)
+        j_burn_p = self.burn_pile.count_value(CardValue.JOKER)
+        joker_count_in_players = sum(player.number_of_jokers for player in self.players)
+        return j_draw_p + j_play_p + j_burn_p + joker_count_in_players
 
     def __is_potentially_playable(self, card: Card, top_card: Card) -> bool:
         comparison = self.__playable_card_comparisons[self.play_order]

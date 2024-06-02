@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 
-from board_actions import IAction
 from src.board_interface import BoardTurnOrder
 
 
 class IBot(ABC):
     @property
+    @abstractmethod
     def name(self) -> str:
         raise NotImplementedError
 
@@ -16,7 +16,12 @@ class IBot(ABC):
 
     @property
     @abstractmethod
-    def action(self) -> IAction:
+    def delay(self) -> float:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def action(self) -> str:
         raise NotImplementedError
 
     @property
@@ -41,7 +46,7 @@ class IBot(ABC):
 
     @property
     @abstractmethod
-    def wants_to_mulligan(self) -> int:
+    def wants_to_mulligan(self) -> str:
         raise NotImplementedError
 
     @property
