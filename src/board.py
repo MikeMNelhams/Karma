@@ -14,7 +14,7 @@ from src.player import Player
 from src.card_pile import CardPile, PlayCardPile
 from src.card_combos import CardComboFactory, CardCombo, Combo_3, Combo_4, Combo_Jack
 from src.board_interface import BoardPlayOrder, BoardTurnOrder, IBoard, IBoardPrinter
-from src.controller import Controller
+from src.controllers import PlayerController
 
 type OnEndTurnEvent = Callable[[Board], None]
 
@@ -115,7 +115,7 @@ class Board(IBoard):
         return None
 
     def play_cards(self, cards: Cards,
-                   controller: Controller | None = None,
+                   controller: PlayerController | None = None,
                    board_printer: IBoardPrinter | None = None,
                    add_to_play_pile: bool = True) -> bool:
         """ Assumes the cards are a legal combo AND can legally be played."""

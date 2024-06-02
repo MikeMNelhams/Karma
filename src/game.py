@@ -2,11 +2,12 @@ from collections import defaultdict
 
 from src.cards import Cards
 from src.board import Board
-from src.board_interface import BoardTurnOrder, IBoard
+from src.board_interface import BoardTurnOrder, IBoard, IAction
 from src.board_printer import BoardPrinter
 from src.board_seeds import BoardFactory
-from src.player_actions import PlayerAction, PlayCardsCombo, PickUpPlayPile
-from src.controller import Controller
+from src.board_actions import PlayCardsCombo, PickUpPlayPile
+from src.controllers import PlayerController
+from src.prompt_manager import PromptManager
 from src import response_conditions as rc
 
 
@@ -31,7 +32,8 @@ class Game:
         else:
             self.board = start_board
         self.boardPrinter = board_printer(self.board)
-        self.controller = Controller()
+        self.controller = PlayerController()
+        self.prompt_manager = PromptManager()
 
         self.game_ranks = {i: len(player) for i, player in enumerate(self.board.players)}
 
@@ -39,7 +41,7 @@ class Game:
         self.board.register_on_end_turn_event(self.__play_turn_again_if_burned_this_turn)  # Get another go if burned
         self.board.register_on_end_turn_event(self.__check_if_winner)  # Raise an exception if game-end condition met
 
-        self.__possible_actions: dict[str, PlayerAction] = {"pickup": PickUpPlayPile(),
+        self.__possible_actions: dict[str, IAction] = {"pickup": PickUpPlayPile(),
                                                             "play_cards": PlayCardsCombo(self.__card_selection_getter)}
         self.__number_of_jokers = self.board.number_of_jokers_in_play
 
@@ -55,22 +57,21 @@ class Game:
 
     def _mulligan_player(self, player_index: int) -> None:
         player = self.board.players[player_index]
-        user_wants_to_mulligan = self.controller.ask_user(["Would you like to mulligan? (Y/N)"],
-                                                          [rc.IsYesOrNo()])[0] == "y"
+        wants_to_mulligan = self.controller.ask_user([self.prompt_manager["mulligan_yn"]],
+                                                     [rc.IsYesOrNo()])[0] == "y"
 
-        while user_wants_to_mulligan:
-            mulligan_swap = self.controller.ask_user(
-                ["Which HAND card index would you like to swap?", "Which FUK card index would you like to swap?"],
-                [rc.IsWithinRange(0, 3), rc.IsWithinRange(0, 2)])
-            player.swap_hand_card_with_karma(mulligan_swap[0], mulligan_swap[1])
+        while wants_to_mulligan:
+            swap = self.controller.ask_user([self.prompt_manager["mulligan_hand_index"], self.prompt_manager["mulligan_fuk_index"]],
+                                            [rc.IsWithinRange(0, 3), rc.IsWithinRange(0, 2)])
+            player.swap_hand_card_with_karma(swap[0], swap[1])
             self.print(player_index)
-            user_wants_to_mulligan = self.controller.ask_user(["Would you like to mulligan? (Y/N)"],
-                                                              [rc.IsYesOrNo()])[0] == "y"
+            wants_to_mulligan = self.controller.ask_user([self.prompt_manager["mulligan_yn"]],
+                                                         [rc.IsYesOrNo()])[0] == "y"
         return None
 
     def choose_start_direction(self) -> None:
         self.print(self.board.player_index)
-        direction = self.controller.ask_user(["Which direction do you want to go? (<--- L or R --->)"],
+        direction = self.controller.ask_user([self.prompt_manager["choose_direction"]],
                                              [rc.IsInSet({"l", "r"})])
         if direction[0].lower() == "r":
             return self.board.set_turn_order(BoardTurnOrder.RIGHT)
@@ -98,10 +99,12 @@ class Game:
         if len(action_names) == 1:
             action_name = action_names[0]
         else:
-            action_name = self.controller.ask_user([f"What action would you like to do: ({"/".join(action_names)})"],
+            get_action_prompt = self.prompt_manager["select_action"]
+            get_action_prompt.set_text(get_action_prompt.text + f" ({"/".join(action_names)})")
+            action_name = self.controller.ask_user([get_action_prompt],
                                                    [rc.IsInSet(set(action_names))])[0]
 
-        action: PlayerAction = self.__possible_actions[action_name].copy()
+        action: IAction = self.__possible_actions[action_name].copy()
         action(self.board, controller=self.controller, board_printer=self.boardPrinter)
         self.board.end_turn()
         return None
@@ -119,8 +122,9 @@ class Game:
         lower_bound = 0
         upper_bound = len(self.board.current_player.playable_cards) - 1
         max_selection = len(self.board.current_player.playable_cards)
-        prompt = f"What card indices do you want to play? From[{lower_bound}, {upper_bound}] - Pick up to {max_selection}"
-        card_indices_selected = self.controller.ask_user([prompt],
+        get_card_indices_prompt = self.prompt_manager["select_cards_to_play"]
+        get_card_indices_prompt.set_text(get_card_indices_prompt.text + f" From[{lower_bound}, {upper_bound}] - Pick up to {max_selection}")
+        card_indices_selected = self.controller.ask_user([get_card_indices_prompt],
                                                          [rc.IsNumberSelection(lower_bound,
                                                                                upper_bound,
                                                                                max_selection)])
@@ -182,7 +186,9 @@ class Game:
         player_indices_to_exclude_from_vote = player_indices - potential_winners
         for player_index, number_of_votes in joker_counts.items():
             board.set_player_index(player_index)
-            player_vote = self.controller.ask_user([f"Hi player: {player_index}. Who do you want to win?"],
+            vote_player_prompt = self.prompt_manager["vote_for_winner"]
+            vote_player_prompt.set_text("Hi player: {player_index}. " + vote_player_prompt.text)
+            player_vote = self.controller.ask_user([vote_player_prompt],
                                                    [rc.IsNumberSelection(0, len(board.players),
                                                                          max_selection_count=1,
                                                                          exclude=player_indices_to_exclude_from_vote)])

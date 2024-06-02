@@ -9,7 +9,7 @@ from enum import Enum
 from src.cards import Card, Cards
 from src.card_pile import CardPile, PlayCardPile
 from src.player import Player
-from src.controller import Controller
+from src.controller_interface import IController
 
 
 class BoardPlayOrder(Enum):
@@ -82,6 +82,16 @@ class IBoardState(metaclass=ABCMeta):
     def turns_played(self) -> int:
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def current_legal_combos(self) -> set:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def number_of_jokers_in_play(self) -> int:
+        raise NotImplementedError
+
 
 class IBoard(IBoardState):
     @abstractmethod
@@ -119,7 +129,7 @@ class IBoard(IBoardState):
 
     @abstractmethod
     def play_cards(self, cards: Cards,
-                   controller: Controller | None = None,
+                   controller: IController | None = None,
                    board_printer: IBoardPrinter | None = None, add_to_play_pile: bool=True) -> bool:
         raise NotImplementedError
 
@@ -147,24 +157,31 @@ class IBoard(IBoardState):
     def step_player_index(self, number_of_steps: int) -> None:
         raise NotImplementedError
 
-    @property
-    @abstractmethod
-    def number_of_jokers_in_play(self) -> int:
-        raise NotImplementedError
-
     @abstractmethod
     def set_number_of_jokers_in_play(self, number_of_jokers: int) -> None:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def current_legal_combos(self) -> set:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
     def combo_history(self) -> list[Cards]:
         raise NotImplementedError
+
+
+class IAction(ABC):
+    @abstractmethod
+    def is_valid(self, board: IBoard) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def __call__(self, board: IBoard, **kwargs) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def copy(self):
+        raise NotImplementedError
+
+    def name(self):
+        return self.__class__.__name__
 
 
 class IBoardPrinter(ABC):

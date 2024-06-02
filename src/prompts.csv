@@ -1,0 +1,11 @@
+key,text
+give_away,What card index do you want to give away?
+give_away_select_player,Which player index do you want to give the card to?
+joker_select_player,Who would you like to JOKER?
+mulligan_yn,Would you like to mulligan? (Y/N)
+mulligan_hand_index,Which HAND card index would you like to swap?
+mulligan_fuk_index,Which FUK card index would you like to swap?
+choose_direction,Which direction do you want to go? (<--- L or R --->)
+select_action,What action would you like to do?
+select_cards_to_play,What card indices do you want to play?
+vote_for_winner,Who do you want to win?"

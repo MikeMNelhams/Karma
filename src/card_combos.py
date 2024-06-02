@@ -8,7 +8,8 @@ from src.cards import Cards, CardValue, non_six_value
 from src.hand import Hand
 from src.player import Player
 from src.board_interface import IBoard, IBoardPrinter
-from src.controller import Controller
+from src.controller_interface import IController
+from prompt_manager import PromptManager
 import src.response_conditions as rc
 
 type CardValueCounts = dict[CardValue, int]
@@ -16,11 +17,16 @@ type CardValueCounts = dict[CardValue, int]
 
 class CardCombo(ABC):
     def __init__(self, cards: Cards, counts: CardValueCounts,
-                 controller: Controller | None=None, board_printer: IBoardPrinter | None=None):
+                 controller: IController | None = None,
+                 board_printer: IBoardPrinter | None = None,
+                 prompt_manager: PromptManager | None = None):
         self.cards = cards
         self.controller = controller
         self.board_printer = board_printer
         self.__counts = counts
+        self.prompt_manager = prompt_manager
+        if prompt_manager is None:
+            self.prompt_manager = PromptManager()
 
     def __len__(self) -> int:
         return len(self.cards)
@@ -144,14 +150,14 @@ class Combo_Queen(CardCombo):
 
     def __give_away_card(self, board, current_player):
         joker_indices = {i for i, card in enumerate(current_player.playable_cards) if card.value == CardValue.JOKER}
-        card_index_selected = self.controller.ask_user(["What card index do you want to give away?"],
+        card_index_selected = self.controller.ask_user([self.prompt_manager["giveaway"]],
                                                        [rc.IsNumberSelection(0,
                                                                              len(current_player.playable_cards) - 1,
                                                                              1,
                                                                              exclude=joker_indices)])
         players_with_no_cards = {i for i, player in enumerate(board.players) if not player.has_cards}
         excluded_target_players = players_with_no_cards | {board.player_index}
-        target_player_index = self.controller.ask_user(["Which player index do you want to give the card to?"],
+        target_player_index = self.controller.ask_user([self.prompt_manager["give_away_select_player"]],
                                                        [rc.IsNumberSelection(0,
                                                                              len(board.players) - 1,
                                                                              1,
@@ -203,8 +209,8 @@ class Combo_Joker(CardCombo):
     def __call__(self, board: IBoard) -> None:
         board.burn(joker_count=len(self))
         current_player_index = board.player_index
-        target_index = self.controller.ask_user(["Who would you like to JOKER?"],
-                                                [rc.IsNumberSelection(0, len(board.players)-1,
+        target_index = self.controller.ask_user([self.prompt_manager["joker_select_player"]],
+                                                [rc.IsNumberSelection(0, len(board.players) - 1,
                                                                       max_selection_count=1,
                                                                       exclude=current_player_index)])
         target_index = target_index[0][0]
@@ -213,13 +219,17 @@ class Combo_Joker(CardCombo):
 
 
 class CardComboFactory:
-    combo_maps = {CardValue.TWO: Combo_2, CardValue.THREE: Combo_3, CardValue.FOUR: Combo_4, CardValue.FIVE: Combo_5,
-                  CardValue.SIX: Combo_6, CardValue.SEVEN: Combo_7, CardValue.EIGHT: Combo_8, CardValue.NINE: Combo_9,
-                  CardValue.TEN: Combo_10, CardValue.JACK: Combo_Jack, CardValue.QUEEN: Combo_Queen,
-                  CardValue.KING: Combo_King, CardValue.ACE: Combo_Ace, CardValue.JOKER: Combo_Joker}
+    combo_maps: dict[CardValue, CardCombo] = {CardValue.TWO: Combo_2, CardValue.THREE: Combo_3,
+                                              CardValue.FOUR: Combo_4, CardValue.FIVE: Combo_5,
+                                              CardValue.SIX: Combo_6, CardValue.SEVEN: Combo_7,
+                                              CardValue.EIGHT: Combo_8, CardValue.NINE: Combo_9,
+                                              CardValue.TEN: Combo_10, CardValue.JACK: Combo_Jack,
+                                              CardValue.QUEEN: Combo_Queen, CardValue.KING: Combo_King,
+                                              CardValue.ACE: Combo_Ace, CardValue.JOKER: Combo_Joker}
 
-    def __init__(self):
+    def __init__(self, prompt_file_path: str = "prompts.csv"):
         self.__counts = {}
+        self.__prompt_manager = PromptManager(prompt_file_path)
 
     def is_valid_combo(self) -> bool:
         counts = self.__counts
@@ -234,14 +244,22 @@ class CardComboFactory:
         return None
 
     def create_combo(self, cards: Cards,
-                     controller: Controller | None=None,
-                     board_printer: IBoardPrinter | None=None) -> CardCombo:
+                     controller: IController | None = None,
+                     board_printer: IBoardPrinter | None = None) -> CardCombo:
         if len(self.__counts) == 1:
             card_value = list(self.__counts.keys())[0]
-            return self.combo_maps[card_value](cards, self.__counts, controller=controller, board_printer=board_printer)
+            card_combo_class = self.combo_maps[card_value]
+            return card_combo_class(cards, self.__counts,
+                                    controller=controller,
+                                    board_printer=board_printer,
+                                    prompt_manager=self.__prompt_manager)
         if len(self.__counts) == 2:
             major_value = non_six_value(self.__counts)
-            return self.combo_maps[major_value](cards, self.__counts, controller=controller, board_printer=board_printer)
+            card_combo_class = self.combo_maps[major_value]
+            return card_combo_class(cards, self.__counts,
+                                    controller=controller,
+                                    board_printer=board_printer,
+                                    prompt_manager=self.__prompt_manager)
         print(self.__counts)
         raise TypeError(f"Too many different type cards!")
 

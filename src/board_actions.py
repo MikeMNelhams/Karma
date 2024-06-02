@@ -1,37 +1,18 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-
 from typing import Callable
 
 from src.utils.multiset import FrozenMultiset
 
 from src.cards import Cards
-from src.board_interface import IBoard, IBoardPrinter
-from src.controller import Controller
+from src.board_interface import IBoard, IBoardPrinter, IAction
+from src.controller_interface import IController
 
 
 type CardGetter = Callable[[], Cards]
 
 
-class PlayerAction(ABC):
-    @abstractmethod
-    def is_valid(self, board: IBoard) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
-    def __call__(self, board: IBoard, **kwargs) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def copy(self):
-        raise NotImplementedError
-
-    def name(self):
-        return self.__class__.__name__
-
-
-class PickUpPlayPile(PlayerAction):
+class PickUpPlayPile(IAction):
     def is_valid(self, board: IBoard) -> bool:
         if not board.current_player.has_cards:
             return False
@@ -47,7 +28,7 @@ class PickUpPlayPile(PlayerAction):
         return PickUpPlayPile()
 
 
-class PlayCardsCombo(PlayerAction):
+class PlayCardsCombo(IAction):
     def __init__(self, cards_getter: CardGetter):
         self.__cards_getter = cards_getter
         self.__cards = None
@@ -67,7 +48,7 @@ class PlayCardsCombo(PlayerAction):
             return False
         return len(board.current_legal_combos) > 0
 
-    def __call__(self, board: IBoard, controller: Controller = None, board_printer: IBoardPrinter | None = None) -> None:
+    def __call__(self, board: IBoard, controller: IController = None, board_printer: IBoardPrinter | None = None) -> None:
         player = board.current_player
 
         while self.cards is None or FrozenMultiset(self.cards.values) not in board.current_legal_combos:
