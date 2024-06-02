@@ -133,8 +133,11 @@ class Combo_Jack(CardCombo):
 class Combo_Queen(CardCombo):
     def __call__(self, board: IBoard) -> None:
         current_player = board.current_player
+        if not current_player.has_cards:
+            return None
         if current_player.playing_from == 1 and not current_player.karma_face_up:
             return None
+
         number_of_repeats = len(self) * board.effect_multiplier
         playing_index_at_start_of_combo = current_player.playing_from
         for _ in range(number_of_repeats):
@@ -148,15 +151,14 @@ class Combo_Queen(CardCombo):
                 return None
         return None
 
-    def __give_away_card(self, board, current_player):
+    def __give_away_card(self, board: IBoard, current_player):
         joker_indices = {i for i, card in enumerate(current_player.playable_cards) if card.value == CardValue.JOKER}
         card_index_selected = self.controller.get_response([self.prompt_manager["give_away"]],
                                                            [rc.IsNumberSelection(0,
                                                                                  len(current_player.playable_cards) - 1,
                                                                                  1,
                                                                                  exclude=joker_indices)])
-        players_with_no_cards = {i for i, player in enumerate(board.players) if not player.has_cards}
-        excluded_target_players = players_with_no_cards | {board.player_index}
+        excluded_target_players = board.potential_winner_indices | {board.player_index}
         target_player_index = self.controller.get_response([self.prompt_manager["give_away_select_player"]],
                                                            [rc.IsNumberSelection(0,
                                                                                  len(board.players) - 1,
@@ -179,9 +181,14 @@ class Combo_King(CardCombo):
         if number_of_repeats == 0:
             return None
         cards_to_play = board.burn_pile.remove_from_bottom(number_of_repeats)
+        king_recursion_counter = 0
         for card in cards_to_play:
             if card.value == CardValue.JOKER:
                 board.set_number_of_jokers_in_play(board.number_of_jokers_in_play - 1)
+            if card.value == CardValue.KING:
+                king_recursion_counter += 1
+                if king_recursion_counter > 52:
+                    return None
             board.play_cards(Cards([card]), controller=self.controller, board_printer=self.board_printer)
         return None
 

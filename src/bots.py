@@ -1,6 +1,6 @@
 from bot_interface import IBot
 
-
+from src.cards import CardValue
 from src.utils.multiset import FrozenMultiset
 from src.board_interface import IBoard, BoardTurnOrder
 from src.board_actions import PickUpPlayPile, PlayCardsCombo
@@ -52,16 +52,18 @@ class IntegrationTestBot(IBot):
         return indices
 
     def card_giveaway_index(self) -> int:
+        playable_cards = self.__board.current_player.playable_cards
+        values = playable_cards.values
+        legal_values = {i for i, value in enumerate(values) if value != CardValue.JOKER}
+        return legal_values.pop()
+
+    def card_giveaway_player_index(self) -> int:
         potential_winner_indices = self.__board.potential_winner_indices
         valid_indices = self.__other_player_indices - potential_winner_indices
         return valid_indices.pop()
 
-    def card_giveaway_player_index(self) -> int:
-        valid_indices = self.__other_player_indices
-        return valid_indices.pop()
-
     def joker_target_index(self) -> int:
-        potential_winner_indices = self.__board.potential_winner_indices
+        potential_winner_indices = self.__board.potential_winner_indices - {self.__board.player_index}
         if potential_winner_indices:
             return potential_winner_indices.pop()
         return self.__other_player_indices.pop()
@@ -79,7 +81,8 @@ class IntegrationTestBot(IBot):
         return BoardTurnOrder.RIGHT
 
     def vote_for_winner_index(self) -> int:
-        return self.__board.potential_winner_indices.pop()
+        vote = self.__board.potential_winner_indices.pop()
+        return vote
 
     @property
     def __other_player_indices(self) -> set[int]:

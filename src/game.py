@@ -179,16 +179,15 @@ class Game:
                 self.game_ranks[player_index] = rank
         return None
 
-    def __vote_for_winners(self, board) -> None:
+    def __vote_for_winners(self, board: IBoard) -> None:
         votes = defaultdict(int)
         joker_counts = {}
         for player_index, player in enumerate(board.players):
-            joker_count = board.get_player(player_index).number_of_jokers
+            joker_count = board.players[player_index].number_of_jokers
             if joker_count > 0:
                 joker_counts[player_index] = joker_count
-        potential_winners = {player_index for player_index, rank in self.game_ranks.items() if rank == 0}
         player_indices = {x for x in range(len(board.players))}
-        player_indices_to_exclude_from_vote = player_indices - potential_winners
+        player_indices_to_exclude_from_vote = player_indices - board.potential_winner_indices
         for player_index, number_of_votes in joker_counts.items():
             board.set_player_index(player_index)
             vote_player_prompt = self.prompt_manager["vote_for_winner"]
@@ -198,11 +197,13 @@ class Game:
                                                                              max_selection_count=1,
                                                                              exclude=player_indices_to_exclude_from_vote)])
             votes[player_vote[0]] += number_of_votes
-        most_votes = max(votes.values())
-        player_indices_with_most_votes = {player_index for player_index, count in votes.items() if count == most_votes}
-        loser_indices = player_indices - player_indices_with_most_votes
-        for player_index in loser_indices:
-            self.game_ranks[player_index] += 1
+
+        if votes:
+            most_votes = max(votes.values())
+            player_indices_with_most_votes = {player_index for player_index, count in votes.items() if count == most_votes}
+            loser_indices = player_indices - player_indices_with_most_votes
+            for player_index in loser_indices:
+                self.game_ranks[player_index] += 1
         return None
 
 
