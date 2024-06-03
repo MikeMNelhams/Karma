@@ -63,6 +63,7 @@ class Board(IBoard):
         self.__number_of_jokers_in_play = self.__count_in_play_jokers()
         self.__total_jokers = self.__count_total_jokers()
         self._combo_history = []
+        self._number_of_combos_played_this_turn = 0
 
     def get_player(self, player_index: int) -> Player:
         return self.players[player_index]
@@ -100,6 +101,7 @@ class Board(IBoard):
 
     def start_turn(self) -> None:
         self.player_index_who_started_turn = self.player_index
+        self._number_of_combos_played_this_turn = 0
         self._has_burned_this_turn = False
         self.__calculate_legal_combos(self.current_player.playable_cards)
         self.__calculate_current_legal_actions()
@@ -133,9 +135,12 @@ class Board(IBoard):
         will_burn_due_to_four_in_a_row = self.play_pile.contains_min_length_run(run_length=4)
 
         self.__draw_until_full()
+        if self.number_of_combos_played_this_turn > 52:
+            return False
         combo(self)
 
         self.__reset_effect_multiplier_if_necessary(combo)
+        self._number_of_combos_played_this_turn += 1
         self._combo_history.append(combo)
 
         if will_burn_due_to_four_in_a_row:
@@ -253,6 +258,10 @@ class Board(IBoard):
     @property
     def has_burned_this_turn(self) -> bool:
         return self._has_burned_this_turn
+
+    @property
+    def number_of_combos_played_this_turn(self) -> int:
+        return self._number_of_combos_played_this_turn
 
     @property
     def turns_played(self) -> int:

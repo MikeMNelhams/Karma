@@ -174,21 +174,20 @@ class Combo_Queen(CardCombo):
 class Combo_King(CardCombo):
     def __call__(self, board: IBoard) -> None:
         number_of_repeats = len(self) * board.effect_multiplier
+
         if board.play_pile.contains_min_length_run(4):
+            # if len(self) == 4 and self.cards.values.count(CardValue.KING) == 4:
+            #     board.burn(joker_count=0)
+            #     return None
             board.burn(joker_count=0)
 
         number_of_repeats = min(number_of_repeats, len(board.burn_pile))
         if number_of_repeats == 0:
             return None
         cards_to_play = board.burn_pile.remove_from_bottom(number_of_repeats)
-        king_recursion_counter = 0
         for card in cards_to_play:
             if card.value == CardValue.JOKER:
                 board.set_number_of_jokers_in_play(board.number_of_jokers_in_play - 1)
-            if card.value == CardValue.KING:
-                king_recursion_counter += 1
-                if king_recursion_counter > 52:
-                    return None
             board.play_cards(Cards([card]), controller=self.controller, board_printer=self.board_printer)
         return None
 

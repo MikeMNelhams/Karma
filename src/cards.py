@@ -3,6 +3,8 @@ from __future__ import annotations
 import random
 from enum import Enum
 
+from collections import Counter
+
 from typing import Iterable, TypeVar
 
 
@@ -110,20 +112,17 @@ class Cards(list[Card]):
         return indices
 
     def remove(self, cards: Cards) -> Cards:
-        target_cards = cards.copy()
+        """ LIST difference (order preserved, duplicates preserved). self = x - y and returns (x - y)"""
         removed_cards = Cards()
-        i = len(target_cards) - 1
-        while i >= 0:
-            target_card = target_cards[i]
-            j = len(self) - 1
-            while j >= 0 and target_cards:
-                card_checking = self[j]
-                if target_card == card_checking:
-                    target_cards.pop(i)
-                    removed_cards.add_card(self.pop(j))
-                    i -= 1
-                j -= 1
-            i -= 1
+        targets_counts = Counter(cards)
+        leftovers = Cards()
+        for i, x in enumerate(self):
+            if x in targets_counts and targets_counts[x] > 0:
+                targets_counts[x] -= 1
+                removed_cards.add_card(x)
+            else:
+                leftovers.add_card(x)
+        self[:] = leftovers
         return removed_cards
 
     def get(self, indices: list[int]) -> Cards:

@@ -107,6 +107,11 @@ class IBoardState(metaclass=ABCMeta):
     def potential_winner_indices(self) -> set[int]:
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def number_of_combos_played_this_turn(self) -> int:
+        raise NotImplementedError
+
 
 class IBoard(IBoardState):
     @abstractmethod
