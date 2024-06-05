@@ -108,7 +108,6 @@ class Cards(list[Card]):
                 if target_card == card_checking:
                     indices.append(j)
                     target_cards.pop(i)
-                    self_copy.pop(j)
         return indices
 
     def remove(self, cards: Cards) -> Cards:

@@ -92,21 +92,20 @@ class PlayCardPile(CardPile):
     def remove(self, cards: Cards) -> Cards:
         raise NotImplementedError("Not supported yet for PlayCardPile")
 
-    def contains_min_length_run(self, run_length: int = 4):
-        k = run_length
-        if len(self) < k:
+    def contains_min_length_run(self, run_length: int = 4) -> bool:
+        if len(self) < run_length:
             return False
         total_run = 1
-        major_value = self[-1].value
+        major_value = self[0].value
 
-        for card in reversed(self[:-1]):
+        for card in self[1:]:
             if card.value == major_value:
                 total_run += 1
             else:
                 total_run = 1
                 major_value = card.value
 
-            if total_run == k:
+            if total_run == run_length:
                 return True
         return False
 
