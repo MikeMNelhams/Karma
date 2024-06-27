@@ -61,6 +61,10 @@ class Cards(list[Card]):
     def __hash__(self):
         return hash(tuple(self))
 
+    @staticmethod
+    def repeat(card: Card, number_of_repeats: int) -> Cards:
+        return Cards([card for _ in range(number_of_repeats)])
+
     def repr_flipped(self):
         unknowns = ["??" for _ in self]
         middle_str = ", ".join(unknowns)

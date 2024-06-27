@@ -127,8 +127,8 @@ class Board(IBoard):
                    add_to_play_pile: bool = True) -> bool:
         """ Assumes the cards are a legal combo AND can legally be played."""
         self.card_combo_factory.set_counts(cards)
-        combo = self.card_combo_factory.create_combo(cards, controller=controller, board_printer=board_printer)
-        combo_visibility = self.__combo_visibility(combo)
+        combo = self.card_combo_factory.create_combo(controller=controller, board_printer=board_printer)
+        combo_visibility = self.card_combo_factory.combo_visibility(self)
         if add_to_play_pile:
             self.play_pile.add_cards(cards, are_visibles=combo_visibility)
 
@@ -139,7 +139,7 @@ class Board(IBoard):
             return False
         combo(self)
 
-        self.__reset_effect_multiplier_if_necessary(combo)
+        self.__reset_effect_multiplier_if_necessary(self.card_combo_factory.major_card_value())
         self._number_of_combos_played_this_turn += 1
         self._combo_history.append(combo)
 
@@ -156,8 +156,7 @@ class Board(IBoard):
             if joker_count == 1:
                 indices_to_burn = [len(self.play_pile) - 1]
             else:
-                indices_to_burn = self.play_pile.pop_multiple(
-                    list(range(len(self.play_pile) - joker_count, len(self.play_pile))))
+                indices_to_burn = list(range(len(self.play_pile) - joker_count, len(self.play_pile)))
             cards_to_burn = self.play_pile.pop_multiple(indices_to_burn)
             self.set_number_of_jokers_in_play(
                 self.number_of_jokers_in_play - cards_to_burn.count_value(CardValue.JOKER))
@@ -347,23 +346,10 @@ class Board(IBoard):
         filler_is_unplayable = not comparison(self.__filler_card_value.value, top_card.value.value)
         return contains_filler and filler_is_unplayable
 
-    def __combo_visibility(self, combo: CardCombo) -> list[int]:
-        if combo.__class__.__name__ == Combo_4.__name__:
-            combo_visibility = [0 for _ in range(len(combo))]
-        elif combo.__class__.__name__ == Combo_Jack.__name__:
-            visibility = 1
-            if self.play_pile and self.play_pile[-1].value == CardValue.FOUR:
-                visibility = 0
-            combo_visibility = [visibility for _ in range(len(combo))]
-        else:
-            combo_visibility = [1 for _ in range(len(combo))]
-        return combo_visibility
-
-    def __reset_effect_multiplier_if_necessary(self, combo) -> None:
-        combo_name = combo.__class__.__name__
-        if combo_name == Combo_3.__name__:
+    def __reset_effect_multiplier_if_necessary(self, card_value: CardValue) -> None:
+        if card_value == CardValue.THREE:
             return None
-        if combo_name == Combo_Jack.__name__:
+        if card_value == CardValue.JACK:
             if not self.combo_history:
                 self.set_effect_multiplier(1)
             elif self.combo_history[-1].__class__.__name__ != Combo_3.__name__:

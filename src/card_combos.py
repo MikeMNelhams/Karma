@@ -114,7 +114,7 @@ class Combo_10(CardCombo):
 
 class Combo_Jack(CardCombo):
     def __call__(self, board: IBoard) -> None:
-        if len(board.play_pile) < len(self.cards) * 2:
+        if len(board.play_pile) <= len(self.cards):
             return None
 
         card_below_combo = board.play_pile[-1 - len(self)]
@@ -124,9 +124,9 @@ class Combo_Jack(CardCombo):
         number_of_repeats = len(self) * board.effect_multiplier
         if card_below_combo.value == CardValue.THREE:
             number_of_repeats = len(self)  # Otherwise it would go 2 -> 8, which would errr, not be good
-        for _ in range(number_of_repeats):
-            board.play_cards(Cards([card_below_combo]), controller=self.controller, board_printer=self.board_printer,
-                             add_to_play_pile=False)
+        board.play_cards(Cards.repeat(card_below_combo, number_of_repeats),
+                         controller=self.controller, board_printer=self.board_printer,
+                         add_to_play_pile=False)
         return None
 
 
@@ -176,9 +176,6 @@ class Combo_King(CardCombo):
         number_of_repeats = len(self) * board.effect_multiplier
 
         if board.play_pile.contains_min_length_run(4):
-            # if len(self) == 4 and self.cards.values.count(CardValue.KING) == 4:
-            #     board.burn(joker_count=0)
-            #     return None
             board.burn(joker_count=0)
 
         number_of_repeats = min(number_of_repeats, len(board.burn_pile))
@@ -187,7 +184,7 @@ class Combo_King(CardCombo):
         cards_to_play = board.burn_pile.remove_from_bottom(number_of_repeats)
         for card in cards_to_play:
             if card.value == CardValue.JOKER:
-                board.set_number_of_jokers_in_play(board.number_of_jokers_in_play - 1)
+                board.set_number_of_jokers_in_play(board.number_of_jokers_in_play + 1)
             board.play_cards(Cards([card]), controller=self.controller, board_printer=self.board_printer)
         return None
 
@@ -236,6 +233,7 @@ class CardComboFactory:
     def __init__(self, prompt_file_path: str = "prompts.csv"):
         self.__counts = {}
         self.__prompt_manager = PromptManager(prompt_file_path)
+        self.__cards = None
 
     def is_valid_combo(self) -> bool:
         counts = self.__counts
@@ -247,27 +245,37 @@ class CardComboFactory:
 
     def set_counts(self, cards: Cards) -> None:
         self.__counts = self.__calculate_counts(cards)
+        self.__cards = cards
         return None
 
-    def create_combo(self, cards: Cards,
-                     controller: IController | None = None,
+    def create_combo(self, controller: IController | None = None,
                      board_printer: IBoardPrinter | None = None) -> CardCombo:
+        card_value = self.major_card_value()
+        card_combo_class = self.combo_maps[card_value]
+        return card_combo_class(self.__cards, self.__counts,
+                                controller=controller,
+                                board_printer=board_printer,
+                                prompt_manager=self.__prompt_manager)
+
+    def combo_visibility(self, board: IBoard) -> list[int]:
+        card_value = self.major_card_value()
+        if card_value == CardValue.FOUR:
+            combo_visibility = [0 for _ in range(len(self.__cards))]
+        elif card_value == CardValue.JACK:
+            visibility = 1
+            if board.play_pile and board.play_pile[-1].value == CardValue.FOUR:
+                visibility = 0
+            combo_visibility = [visibility for _ in range(len(self.__cards))]
+        else:
+            combo_visibility = [1 for _ in range(len(self.__cards))]
+        return combo_visibility
+
+    def major_card_value(self) -> CardValue:
         if len(self.__counts) == 1:
-            card_value = list(self.__counts.keys())[0]
-            card_combo_class = self.combo_maps[card_value]
-            return card_combo_class(cards, self.__counts,
-                                    controller=controller,
-                                    board_printer=board_printer,
-                                    prompt_manager=self.__prompt_manager)
-        if len(self.__counts) == 2:
-            major_value = non_six_value(self.__counts)
-            card_combo_class = self.combo_maps[major_value]
-            return card_combo_class(cards, self.__counts,
-                                    controller=controller,
-                                    board_printer=board_printer,
-                                    prompt_manager=self.__prompt_manager)
-        print(self.__counts)
-        raise TypeError(f"Too many different type cards!")
+            return list(self.__counts.keys())[0]
+        elif len(self.__counts) == 2:
+            return non_six_value(self.__counts)
+        raise TypeError("Too many different type cards!")
 
     @staticmethod
     def __calculate_counts(cards: Cards) -> dict[CardValue, int]:

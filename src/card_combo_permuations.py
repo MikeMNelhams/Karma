@@ -8,7 +8,7 @@ def equal_subsequence_permutations(seq: Cards) -> set[FrozenMultiset]:
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
-        return {FrozenMultiset([seq[0].value])}
+        return __single_value_frozen_multiset(seq)
 
     count = defaultdict(int)
 
@@ -26,7 +26,7 @@ def equal_subsequence_permutations_filler(seq: Cards,
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
-        return {FrozenMultiset([seq[0].value])}
+        return __single_value_frozen_multiset(seq)
 
     count = defaultdict(int)
     outputs = set()
@@ -36,9 +36,9 @@ def equal_subsequence_permutations_filler(seq: Cards,
         outputs.add(FrozenMultiset([key for _ in range(count[key])]))
 
     filler_count = count[filler]
+    outputs_that_include_filler = set()
     if filler_count == 0:
         return outputs
-    outputs_that_include_filler = set()
     for output in outputs:
         if len(output) < minimum_to_filler:
             continue
@@ -55,7 +55,7 @@ def equal_subsequence_permutations_filler_not_exclusively_filler(seq: Cards,
     if len(seq) == 0:
         return set()
     if len(seq) == 1:
-        return {FrozenMultiset([seq[0].value])}
+        return __single_value_frozen_multiset(seq)
 
     count = defaultdict(int)
     outputs = set()
@@ -87,7 +87,7 @@ def equal_subsequence_permutations_filler_and_filter(seq: Cards,
     if len(seq) == 1:
         if _filter(seq[0]):
             return set()
-        return {FrozenMultiset([seq[0].value])}
+        return __single_value_frozen_multiset(seq)
 
     count = defaultdict(int)
     outputs = set()
@@ -108,7 +108,7 @@ def equal_subsequence_permutations_filler_and_filter(seq: Cards,
         for i in range(1, filler_count + 1):
             outputs_that_include_filler.add(FrozenMultiset(list(output) + [filler for _ in range(i)]))
     outputs |= outputs_that_include_filler
-    outputs -= {FrozenMultiset([filler for _ in range(filler_count + i)]) for i in range(1, filler_count + 1)}
+    outputs -= __not_exclusively_filler_but_contains_filler_frozen_multi_sets(filler, filler_count)
     return outputs
 
 
@@ -121,7 +121,7 @@ def equal_subsequence_permutations_filler_filter_not_exclusively_filler(seq: Car
     if len(seq) == 1:
         if _filter(seq[0]):
             return set()
-        return {FrozenMultiset([seq[0].value])}
+        return __single_value_frozen_multiset(seq)
 
     count = defaultdict(int)
     outputs = set()
@@ -144,3 +144,11 @@ def equal_subsequence_permutations_filler_filter_not_exclusively_filler(seq: Car
     outputs |= outputs_that_include_filler
     outputs -= {FrozenMultiset([filler for _ in range(i)]) for i in range(1, filler_count * 2 + 1)}
     return outputs
+
+
+def __single_value_frozen_multiset(seq):
+    return {FrozenMultiset([seq[0].value])}
+
+
+def __not_exclusively_filler_but_contains_filler_frozen_multi_sets(filler, filler_count):
+    return {FrozenMultiset([filler for _ in range(filler_count + i)]) for i in range(1, filler_count + 1)}
