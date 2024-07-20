@@ -152,11 +152,10 @@ class Game:
     def __check_if_winner(self, board: Board) -> None:
         self.__update_game_ranks(board)
         number_of_potential_winners = self.number_of_potential_winners
-        if number_of_potential_winners == 1 and board.number_of_jokers_in_play == 0:
+
+        if number_of_potential_winners >= 1 and board.number_of_jokers_in_play == 0:
             raise GameWonException(self.game_ranks)
 
-        if number_of_potential_winners >= 2 and board.number_of_jokers_in_play == 0:
-            raise GameWonException(self.game_ranks)
         if number_of_potential_winners >= 2:
             self.__vote_for_winners(board)
             raise GameWonException(self.game_ranks)

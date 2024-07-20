@@ -89,7 +89,7 @@ def _repr_players(board: IBoard, select_index: int=None, debug: bool=False) -> I
 
 
 def __players_repr_debug(board: IBoard) -> list[str]:
-    return [player.repr_debug() for i, player in enumerate(board.players)]
+    return [player.repr_debug() for player in board.players]
 
 
 def __players_flipped_repr(board: IBoard, select_index: int) -> list[str]:

@@ -152,6 +152,7 @@ class Board(IBoard):
         if not self.play_pile:
             return None
 
+        self._has_burned_this_turn = True
         if joker_count > 0:
             if joker_count == 1:
                 indices_to_burn = [len(self.play_pile) - 1]
@@ -161,11 +162,9 @@ class Board(IBoard):
             self.set_number_of_jokers_in_play(
                 self.number_of_jokers_in_play - cards_to_burn.count_value(CardValue.JOKER))
             self.burn_pile.add_cards(cards_to_burn)
-            self._has_burned_this_turn = True
             return None
         self.burn_pile.add_cards(self.play_pile)
         self.play_pile.clear()
-        self._has_burned_this_turn = True
         return None
 
     def legal_combos_from_cards(self, cards: Cards) -> set:
@@ -187,6 +186,7 @@ class Board(IBoard):
             if self.__contains_unplayable_filler(cards, top_card):
                 return equal_subsequence_permutations_filler_not_exclusively_filler(valid_cards, filler, 3)
             return equal_subsequence_permutations_filler(valid_cards, filler, 3)
+
         if self.__contains_unplayable_filler(cards, top_card):
             return equal_subsequence_permutations_filler_filter_not_exclusively_filler(valid_cards, filler,
                                                                                        self.__is_joker, 3)
